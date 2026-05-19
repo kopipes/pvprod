@@ -90,6 +90,16 @@ db.exec(`
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
     );
+    
+    CREATE TABLE IF NOT EXISTS project_members (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        project_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(project_id, user_id),
+        FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
 `);
 
 // Insert default data
@@ -406,6 +416,41 @@ app.put('/api/checklist/:id', (req, res) => {
 app.delete('/api/checklist/:id', (req, res) => {
     try {
         db.prepare('DELETE FROM checklist_items WHERE id = ?').run(req.params.id);
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Project Members
+app.get('/api/projects/:id/members', (req, res) => {
+    try {
+        const members = db.prepare(`
+            SELECT u.id, u.name, u.email, u.role, pm.created_at
+            FROM project_members pm
+            JOIN users u ON pm.user_id = u.id
+            WHERE pm.project_id = ?
+            ORDER BY pm.created_at DESC
+        `).all(req.params.id);
+        res.json(members);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/projects/:id/members', (req, res) => {
+    try {
+        const { user_id } = req.body;
+        db.prepare('INSERT OR IGNORE INTO project_members (project_id, user_id) VALUES (?, ?)').run(req.params.id, user_id);
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.delete('/api/projects/:id/members/:userId', (req, res) => {
+    try {
+        db.prepare('DELETE FROM project_members WHERE project_id = ? AND user_id = ?').run(req.params.id, req.params.userId);
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });

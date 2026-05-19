@@ -913,6 +913,28 @@
         </div>
     </div>
     
+    <div class="modal-overlay" id="projectEditModal">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header"><h3 class="modal-title">Edit Project</h3><button class="modal-close" onclick="hideModal('projectEditModal')">×</button></div>
+            <div id="adminEditFields">
+                <div class="form-group"><label>Project Name</label><input type="text" class="form-control" id="editProjectName" placeholder="Enter project name"></div>
+                <div class="form-group"><label>Client Name</label><input type="text" class="form-control" id="editProjectClient" placeholder="Enter client name"></div>
+                <div class="form-group"><label>Division</label><select class="form-control" id="editProjectDivision"></select></div>
+                <div class="form-group"><label>Start Date</label><input type="date" class="form-control" id="editProjectStartDate"></div>
+                <div class="form-group"><label>End Date</label><input type="date" class="form-control" id="editProjectEndDate"></div>
+                <div class="form-group"><label>Project Members</label><div id="projectMembersList" style="max-height: 150px; overflow-y: auto; border: 2px solid var(--border); border-radius: 14px; padding: 12px;"></div></div>
+                <div id="addMemberSection" class="hidden" style="margin-top: 12px;">
+                    <div style="display: flex; gap: 8px;">
+                        <select class="form-control" id="addMemberSelect" style="flex: 1;"></select>
+                        <button class="btn btn-secondary btn-sm" onclick="addProjectMember()">Add</button>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group"><label>Project Status</label><select class="form-control" id="editProjectStatus"><option value="pre-loading">Pre-Loading</option><option value="loading-in">Loading In</option><option value="loading-out">Loading Out</option><option value="completed">Completed</option></select></div>
+            <button class="btn btn-primary btn-block" onclick="saveProjectEdit()">Save Changes</button>
+        </div>
+    </div>
+    
     <div class="modal-overlay" id="userModal">
         <div class="modal">
             <div class="modal-header"><h3 class="modal-title">Add User</h3><button class="modal-close" onclick="hideModal('userModal')">×</button></div>
@@ -1183,7 +1205,14 @@
                 if (filtered.length === 0) {
                     container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><h4>No Projects Found</h4><p>Try adjusting your filters or create a new project</p></div>';
                 } else {
-                    container.innerHTML = filtered.map(p => `<div class="project-card" data-status="${p.status}" onclick="viewProject('${p.id}')"><div class="project-name">${p.name}</div><div class="project-client">${p.client}</div><div class="project-meta"><span class="meta-item">📁 ${p.division_name || 'No Division'}</span><span class="meta-item">📅 ${formatDate(p.start_date)}</span></div><span class="list-item-badge status-${p.status === 'pre-loading' ? 'pending' : p.status === 'completed' ? 'done' : 'progress'}">${formatStatus(p.status)}</span></div>`).join('');
+                    container.innerHTML = filtered.map(p => `<div class="project-card" data-status="${p.status}"><div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 10;"><div onclick="viewProject('${p.id}')" style="flex: 1; cursor: pointer; pointer-events: none;"><div class="project-name">${p.name}</div><div class="project-client">${p.client}</div><div class="project-meta"><span class="meta-item">📁 ${p.division_name || 'No Division'}</span><span class="meta-item">📅 ${formatDate(p.start_date)}</span>${p.end_date ? '<span class="meta-item">→ ' + formatDate(p.end_date) + '</span>' : ''}</div></div><button id="editBtn${p.id}" onclick="event.stopPropagation(); showProjectEdit('${p.id}')" class="btn btn-secondary btn-sm" style="padding: 12px 20px; font-size: 18px; min-width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; z-index: 20;">✏️</button></div><span class="list-item-badge status-${p.status === 'pre-loading' ? 'pending' : p.status === 'completed' ? 'done' : 'progress'}">${formatStatus(p.status)}</span></div>`).join('');
+                
+                document.querySelectorAll('.edit-project-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        showProjectEdit(btn.dataset.id);
+                    });
+                });
                 }
             } catch (e) { console.error(e); }
         }
@@ -1211,6 +1240,93 @@
                 loadProjectDetails();
                 showSection('projectDetail');
             } catch (e) { console.error(e); }
+        }
+        
+        async function showProjectEdit(id) {
+            try {
+                const projects = await fetchAPI('/api/projects');
+                const project = projects.find(p => p.id == id);
+                if (!project) return;
+                
+                // Check if admin or manager
+                const isAdminOrManager = currentUser.role === 'admin' || currentUser.role === 'manager';
+                
+                // Show/hide admin fields
+                document.getElementById('adminEditFields').style.display = isAdminOrManager ? 'block' : 'none';
+                
+                if (isAdminOrManager) {
+                    document.getElementById('editProjectName').value = project.name || '';
+                    document.getElementById('editProjectClient').value = project.client || '';
+                    document.getElementById('editProjectStartDate').value = project.start_date || '';
+                    document.getElementById('editProjectEndDate').value = project.end_date || '';
+                    const divisions = await fetchAPI('/api/divisions');
+                    const select = document.getElementById('editProjectDivision');
+                    select.innerHTML = '<option value="">-- Select Division --</option>';
+                    divisions.forEach(d => { select.innerHTML += `<option value="${d.id}" ${d.id == project.division_id ? 'selected' : ''}>${d.name}</option>`; });
+                    
+                    // Load project members
+                    const members = await fetchAPI('/api/projects/' + id + '/members');
+                    renderProjectMembers(members);
+                    document.getElementById('addMemberSection').classList.remove('hidden');
+                    const allUsers = await fetchAPI('/api/users');
+                    const memberSelect = document.getElementById('addMemberSelect');
+                    const memberIds = members.map(m => m.id);
+                    memberSelect.innerHTML = '<option value="">-- Select User --</option>';
+                    allUsers.filter(u => !memberIds.includes(u.id)).forEach(u => { memberSelect.innerHTML += `<option value="${u.id}">${u.name} (${u.role})</option>`; });
+                }
+                
+                document.getElementById('editProjectStatus').value = project.status || 'pre-loading';
+                currentProject = project;
+                showModal('projectEditModal');
+            } catch (e) { alert('Error loading project'); }
+        }
+        
+        function renderProjectMembers(members) {
+            const container = document.getElementById('projectMembersList');
+            if (members.length === 0) {
+                container.innerHTML = '<div style="color: var(--text-secondary); font-size: 13px;">No members yet</div>';
+            } else {
+                container.innerHTML = members.map(m => `<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border);"><div><strong>${m.name}</strong> <span class="role-badge role-${m.role}">${m.role}</span></div>${(currentUser.role === 'admin' || currentUser.role === 'manager') ? `<button class="btn btn-outline btn-sm" onclick="removeProjectMember(${m.id})" style="padding: 4px 8px; font-size: 11px; color: var(--error);">×</button>` : ''}</div>`).join('');
+            }
+        }
+        
+        async function addProjectMember() {
+            const userId = document.getElementById('addMemberSelect').value;
+            if (!userId) { alert('Please select a user'); return; }
+            try {
+                await fetchAPI('/api/projects/' + currentProject.id + '/members', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userId }) });
+                showToast('Member added!');
+                const members = await fetchAPI('/api/projects/' + currentProject.id + '/members');
+                renderProjectMembers(members);
+            } catch (e) { alert('Error adding member'); }
+        }
+        
+        async function removeProjectMember(userId) {
+            showConfirm('Remove this member from project?', async () => {
+                try {
+                    await fetchAPI('/api/projects/' + currentProject.id + '/members/' + userId, { method: 'DELETE' });
+                    showToast('Member removed!');
+                    const members = await fetchAPI('/api/projects/' + currentProject.id + '/members');
+                    renderProjectMembers(members);
+                } catch (e) { alert('Error removing member'); }
+            });
+        }
+        
+        async function saveProjectEdit() {
+            if (!currentProject) return;
+            const name = document.getElementById('editProjectName').value;
+            const client = document.getElementById('editProjectClient').value;
+            const division_id = document.getElementById('editProjectDivision').value;
+            const status = document.getElementById('editProjectStatus').value;
+            const start_date = document.getElementById('editProjectStartDate').value;
+            const end_date = document.getElementById('editProjectEndDate').value;
+            if (!name) { alert('Please enter project name'); return; }
+            try {
+                await fetchAPI('/api/projects/' + currentProject.id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, client, division_id, status, start_date, end_date }) });
+                hideModal('projectEditModal');
+                showToast('Project updated!');
+                loadProjects();
+            } catch (e) { alert('Error updating project'); }
         }
         
         function updateProjectProgress() {
