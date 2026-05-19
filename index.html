@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PVPROD - Production Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0f172a;
+            --primary-light: #1e293b;
+            --secondary: #3b82f6;
+            --accent: #f97316;
+            --success: #10b981;
+            --warning: #eab308;
+            --error: #ef4444;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --radius-lg: 24px;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #f0f4ff 0%, #f8fafc 50%, #f0fdf4 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding-bottom: 100px;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, #1e3a5f 100%);
+            color: white;
+            padding: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 4px 30px rgba(0,0,0,0.2);
+        }
+        
+        .header-content {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-brand { display: flex; align-items: center; gap: 12px; }
+        
+        .header-logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent), #fb923c);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 18px;
+            box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
+        }
+        
+        .header h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+        
+        .header-actions { display: flex; gap: 12px; align-items: center; }
+        
+        .user-badge {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 600;
+            border: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+        }
+        
+        .logout-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .logout-btn:hover { background: rgba(255,255,255,0.2); transform: translateY(-1px); }
+        
+        .nav {
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 16px;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            position: sticky;
+            top: 76px;
+            z-index: 99;
+            scrollbar-width: none;
+        }
+        
+        .nav::-webkit-scrollbar { display: none; }
+        
+        .nav-btn {
+            padding: 10px 20px;
+            border: none;
+            background: var(--bg);
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: var(--text-secondary);
+        }
+        
+        .nav-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        
+        .nav-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            box-shadow: 0 4px 15px rgba(15, 23, 42, 0.3);
+        }
+        
+        .main { padding: 20px; max-width: 800px; margin: 0 auto; }
+        
+        .section { display: none; animation: fadeIn 0.3s ease; }
+        .section.active { display: block; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid rgba(0,0,0,0.02);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card:hover { transform: translateY(-2px); box-shadow: var(--shadow-xl); }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .card-title { font-size: 18px; font-weight: 700; }
+        
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--secondary), #60a5fa);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: inherit;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), #fb923c);
+            color: white;
+            box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
+        }
+        
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(249, 115, 22, 0.5); }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--secondary), #60a5fa);
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #34d399);
+            color: white;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+        }
+        
+        .btn-outline { background: white; border: 2px solid var(--border); color: var(--text-primary); }
+        .btn-outline:hover { border-color: var(--secondary); color: var(--secondary); transform: translateY(-2px); }
+        
+        .btn-sm { padding: 8px 16px; font-size: 12px; border-radius: 10px; }
+        .btn-block { width: 100%; }
+        .btn-danger { background: linear-gradient(135deg, var(--error), #f87171); color: white; }
+        
+        .form-group { margin-bottom: 20px; }
+        
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 16px 18px;
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .form-control:focus { outline: none; border-color: var(--secondary); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
+        .form-control::placeholder { color: var(--text-secondary); opacity: 0.6; }
+        
+        select.form-control {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            padding-right: 48px;
+        }
+        
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+        }
+        
+        .photo-item {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 16px;
+            overflow: hidden;
+            background: var(--bg);
+            box-shadow: var(--shadow-sm);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .photo-item:hover { transform: scale(1.05); box-shadow: var(--shadow-lg); }
+        .photo-item img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .photo-item .photo-note {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            color: white;
+            font-size: 11px;
+            padding: 24px 8px 8px;
+            max-height: 60px;
+            overflow: hidden;
+        }
+        
+        .photo-date { font-size: 12px; color: var(--text-secondary); margin-top: 8px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+        
+        .date-badge { background: var(--bg); padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 16px 20px;
+            background: var(--bg);
+            border-radius: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid transparent;
+        }
+        
+        .checklist-item:hover { border-color: var(--secondary); transform: translateX(4px); }
+        
+        .checklist-item.checked {
+            opacity: 0.5;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(52, 211, 153, 0.1));
+            border-color: var(--success);
+        }
+        
+        .checklist-checkbox {
+            width: 24px;
+            height: 24px;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.3s;
+            background: white;
+        }
+        
+        .checklist-item.checked .checklist-checkbox { background: var(--success); border-color: var(--success); color: white; }
+        
+        .checklist-content { flex: 1; }
+        .checklist-title { font-size: 15px; font-weight: 600; }
+        .checklist-meta { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+        
+        .list-item {
+            padding: 20px;
+            background: var(--bg);
+            border-radius: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid transparent;
+        }
+        
+        .list-item:hover { border-color: var(--secondary); transform: translateX(4px); }
+        
+        .list-item-title { font-weight: 700; font-size: 16px; }
+        .list-item-sub { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+        
+        .list-item-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-top: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+            z-index: 200;
+        }
+        
+        .modal-overlay.active { display: flex; }
+        
+        .modal {
+            background: var(--card);
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 28px;
+            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .modal-title { font-size: 20px; font-weight: 800; }
+        
+        .modal-close {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: var(--bg);
+            border-radius: 12px;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-close:hover { background: var(--error); color: white; }
+        
+        .status-pending { background: linear-gradient(135deg, var(--warning), #facc15); color: var(--text-primary); }
+        .status-progress { background: linear-gradient(135deg, var(--secondary), #60a5fa); color: white; }
+        .status-done { background: linear-gradient(135deg, var(--success), #34d399); color: white; }
+        
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: linear-gradient(135deg, var(--bg), white);
+        }
+        
+        .upload-area:hover { border-color: var(--secondary); background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(96, 165, 250, 0.05)); transform: scale(1.02); }
+        
+        .upload-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--secondary), #60a5fa);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 28px;
+        }
+        
+        .upload-area h4 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+        .upload-area p { color: var(--text-secondary); font-size: 13px; }
+        
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-secondary); }
+        
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+            width: 80px;
+            height: 80px;
+            background: var(--bg);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+        
+        .empty-state h4 { font-size: 18px; font-weight: 700; margin-bottom: 8px; color: var(--text-primary); }
+        .empty-state p { font-size: 14px; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+        
+        .stat-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 24px;
+            text-align: center;
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s;
+        }
+        
+        .stat-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-xl); }
+        
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            font-size: 22px;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .stat-label { font-size: 12px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+        
+        .project-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow-md);
+            border-left: 5px solid;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .project-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), transparent);
+            border-radius: 0 0 0 100%;
+        }
+        
+        .project-card:hover { transform: translateY(-4px) scale(1.02); box-shadow: var(--shadow-xl); }
+        
+        .project-card[data-status="pre-loading"] { border-color: var(--warning); }
+        .project-card[data-status="loading-in"] { border-color: var(--secondary); }
+        .project-card[data-status="loading-out"] { border-color: var(--accent); }
+        .project-card[data-status="completed"] { border-color: var(--success); }
+        
+        .project-name { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+        .project-client { font-size: 14px; color: var(--text-secondary); }
+        .project-meta { display: flex; gap: 16px; margin-top: 16px; font-size: 13px; color: var(--text-secondary); }
+        .meta-item { display: flex; align-items: center; gap: 6px; font-weight: 500; }
+        
+        .phase-progress { display: flex; gap: 6px; margin: 20px 0; }
+        .phase-bar { flex: 1; height: 8px; background: var(--border); border-radius: 10px; overflow: hidden; }
+        .phase-bar-fill { height: 100%; background: linear-gradient(90deg, var(--success), #34d399); border-radius: 10px; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        .detail-header { background: linear-gradient(135deg, var(--primary), #1e3a5f); color: white; padding: 24px; margin: -20px -20px 24px -20px; }
+        
+        .back-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            font-size: 20px;
+            cursor: pointer;
+            margin-right: 16px;
+            transition: all 0.2s;
+        }
+        
+        .back-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.1); }
+        
+        .status-tabs { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+        
+        .status-tab {
+            padding: 10px 18px;
+            border: 2px solid var(--border);
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            background: white;
+            transition: all 0.3s;
+        }
+        
+        .status-tab:hover { border-color: var(--secondary); transform: translateY(-2px); }
+        
+        .status-tab.active {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 15px rgba(15, 23, 42, 0.3);
+        }
+        
+        .hidden { display: none !important; }
+        .mt-3 { margin-top: 16px; }
+        .mb-2 { margin-bottom: 12px; }
+        .flex { display: flex; }
+        .gap-2 { gap: 12px; }
+        
+        .welcome-section {
+            background: linear-gradient(135deg, var(--primary), #1e3a5f);
+            color: white;
+            border-radius: var(--radius);
+            padding: 28px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .welcome-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        }
+        
+        .welcome-section h3 { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+        .welcome-section p { opacity: 0.8; font-size: 14px; }
+        
+        .section-title { font-size: 20px; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+        .section-title::after { content: ''; flex: 1; height: 2px; background: linear-gradient(90deg, var(--border), transparent); }
+        
+        .filter-row { display: flex; gap: 12px; margin-bottom: 20px; }
+        .filter-row .form-control { flex: 1; padding: 12px 16px; }
+        
+        /* User Avatar */
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #fb923c);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+        }
+        
+        /* Loading Spinner */
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border);
+            border-top-color: var(--secondary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 40px auto;
+        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Role Badge */
+        .role-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        
+        .role-admin { background: linear-gradient(135deg, var(--error), #f87171); color: white; }
+        .role-head { background: linear-gradient(135deg, var(--secondary), #60a5fa); color: white; }
+        .role-manager { background: linear-gradient(135deg, var(--accent), #fb923c); color: white; }
+        .role-user { background: linear-gradient(135deg, var(--success), #34d399); color: white; }
+        
+        /* Edit Mode */
+        .edit-btn {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+        
+        .delete-btn {
+            background: var(--error);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 300;
+            animation: toastIn 0.3s ease;
+        }
+        
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="header-brand">
+                <div class="header-logo">P</div>
+                <h1>PVPROD</h1>
+            </div>
+            <div class="header-actions">
+                <div class="user-badge" id="userBadge" onclick="showModal('settingsModal')">Admin</div>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </header>
+    
+    <nav class="nav">
+        <button class="nav-btn active" data-section="dashboard">🏠 Dashboard</button>
+        <button class="nav-btn" data-section="projects">📋 Projects</button>
+        <button class="nav-btn admin-only" data-section="master">⚙️ Master</button>
+        <button class="nav-btn" data-section="settings">👤 Settings</button>
+    </nav>
+    
+    <main class="main">
+        <section id="loginSection" class="section">
+            <div class="card" style="margin-top: 30px;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--accent), #fb923c); border-radius: 24px; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 800; color: white; margin: 0 auto 20px; box-shadow: 0 8px 30px rgba(249, 115, 22, 0.4);">P</div>
+                    <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 8px;">Welcome to PVPROD</h2>
+                    <p style="color: var(--text-secondary);">Production Management System</p>
+                </div>
+                <div class="form-group">
+                    <label>Select User</label>
+                    <select class="form-control" id="loginUser">
+                        <option value="">-- Select User --</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary btn-block" onclick="doLogin()">Continue →</button>
+            </div>
+        </section>
+        
+        <section id="dashboardSection" class="section active">
+            <div class="welcome-section">
+                <h3>Hello, <span id="welcomeName">User</span> 👋</h3>
+                <p>Ready to manage your production projects</p>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, var(--secondary), #60a5fa); color: white;">📋</div>
+                    <div class="stat-value" id="statProjects">0</div>
+                    <div class="stat-label">Total Projects</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, var(--accent), #fb923c); color: white;">⏳</div>
+                    <div class="stat-value" id="statActive">0</div>
+                    <div class="stat-label">Active</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, var(--success), #34d399); color: white;">📷</div>
+                    <div class="stat-value" id="statPhotos">0</div>
+                    <div class="stat-label">Photos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, var(--warning), #facc15); color: white;">✅</div>
+                    <div class="stat-value" id="statChecklist">0</div>
+                    <div class="stat-label">Checklist Done</div>
+                </div>
+            </div>
+            
+            <h4 class="section-title mt-3">Recent Projects</h4>
+            <div id="recentProjects"></div>
+        </section>
+        
+        <section id="projectsSection" class="section">
+            <div class="filter-row">
+                <select class="form-control" id="filterDivision" onchange="loadProjects()">
+                    <option value="">All Divisions</option>
+                </select>
+                <select class="form-control" id="filterStatus" onchange="loadProjects()">
+                    <option value="">All Status</option>
+                    <option value="pre-loading">Pre-Loading</option>
+                    <option value="loading-in">Loading In</option>
+                    <option value="loading-out">Loading Out</option>
+                    <option value="completed">Completed</option>
+                </select>
+            </div>
+            <button class="btn btn-primary btn-block mb-2" onclick="showModal('projectModal')">+ Create New Project</button>
+            <div id="projectsList"></div>
+        </section>
+        
+        <section id="masterSection" class="section">
+            <div class="status-tabs">
+                <button class="status-tab active" data-tab="divisions">Divisions</button>
+                <button class="status-tab" data-tab="users">Users</button>
+            </div>
+            <div id="divisionsTab">
+                <button class="btn btn-secondary btn-block mb-2" onclick="showAddDivision()">+ Add Division</button>
+                <div id="divisionsList"></div>
+            </div>
+            <div id="usersTab" class="hidden">
+                <button class="btn btn-secondary btn-block mb-2" onclick="showModal('userModal')">+ Add User</button>
+                <div id="usersList"></div>
+            </div>
+        </section>
+        
+        <section id="settingsSection" class="section">
+            <div class="card">
+                <h3 class="card-title mb-2">👤 My Profile</h3>
+                <div id="profileInfo"></div>
+            </div>
+        </section>
+        
+        <section id="projectDetailSection" class="section">
+            <div class="detail-header">
+                <div class="flex">
+                    <button class="back-btn" onclick="showSection('projects')">←</button>
+                    <div>
+                        <h2 id="detailProjectName" style="font-size: 20px; font-weight: 800;">Project Name</h2>
+                        <div id="detailProjectClient" style="opacity: 0.7; font-size: 14px;">Client Name</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="phase-progress">
+                <div class="phase-bar"><div class="phase-bar-fill" id="preProgress" style="width: 0%"></div></div>
+                <div class="phase-bar"><div class="phase-bar-fill" id="inProgress" style="width: 0%"></div></div>
+                <div class="phase-bar"><div class="phase-bar-fill" id="outProgress" style="width: 0%"></div></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); font-weight: 600;">
+                <span>📦 Pre</span>
+                <span>🚚 In</span>
+            <span>🔧 Out</span>
+            </div>
+            
+            <div class="status-tabs mt-3">
+                <button class="status-tab active" data-tab="preloading">Pre-Loading</button>
+                <button class="status-tab" data-tab="loadingin">Loading In</button>
+                <button class="status-tab" data-tab="loadingout">Loading Out</button>
+            </div>
+            
+            <div id="preloadingTab">
+                <div class="card">
+                    <div class="card-header"><span class="card-icon">📷</span><h3 class="card-title">1. Survey Photos</h3></div>
+                    <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">Optional - Document initial site condition</p>
+                    <button class="btn btn-outline btn-sm" onclick="showUpload('survey')">+ Add Photos</button>
+                    <div id="surveyPhotos"></div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><span class="card-icon">🎨</span><h3 class="card-title">2. Design Images</h3></div>
+                    <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">Version history with dates</p>
+                    <button class="btn btn-outline btn-sm" onclick="showUpload('design')">+ Add Images</button>
+                    <div id="designImages"></div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><span class="card-icon">📐</span><h3 class="card-title">3. Work Drawings</h3></div>
+                    <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">Image/PDF with changelog</p>
+                    <button class="btn btn-outline btn-sm" onclick="showUpload('drawing')">+ Add Drawings</button>
+                    <div id="workDrawings"></div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><span class="card-icon">🏭</span><h3 class="card-title">4. Workshop Progress</h3></div>
+                    <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">Timestamped production photos</p>
+                    <button class="btn btn-outline btn-sm" onclick="showUpload('workshop')">+ Add Photos</button>
+                    <div id="workshopProgress"></div>
+                </div>
+            </div>
+            
+            <div id="loadinginTab" class="hidden">
+                <div class="card">
+                    <div class="card-header"><span class="card-icon">✅</span><h3 class="card-title">1. Initial Checklist</h3></div>
+                    <button class="btn btn-outline btn-sm" onclick="showAddChecklist('loadingIn')">+ Add Item</button>
+                    <div id="loadingInChecklist"></div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><span class="card-icon">📍</span><h3 class="card-title">2. Marking Photos</h3></div>
+                    <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">Detailed area marking shots</p>
+                    <button class="btn btn-outline btn-sm" onclick="showUpload('marking')">+ Add Photos</button>
+                    <div id="markingPhotos"></div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><span class="card-icon">🔧</span><h3 class="card-title">3. Installation Progress</h3></div>
+                    <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">Daily photo documentation</p>
+                    <button class="btn btn-outline btn-sm" onclick="showUpload('installation')">+ Add Photos</button>
+                    <div id="installationPhotos"></div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><span class="card-icon">🏁</span><h3 class="card-title">4. Final Loading Checklist</h3></div>
+                    <button class="btn btn-outline btn-sm" onclick="showAddChecklist('finalLoading')">+ Add Item</button>
+                    <div id="finalLoadingChecklist"></div>
+                </div>
+            </div>
+            
+            <div id="loadingoutTab" class="hidden">
+                <div class="card">
+                    <div class="card-header"><span class="card-icon">🛠️</span><h3 class="card-title">1. Dismantle Checklist</h3></div>
+                    <button class="btn btn-outline btn-sm" onclick="showAddChecklist('dismantle')">+ Add Item</button>
+                    <div id="dismantleChecklist"></div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><span class="card-icon">📸</span><h3 class="card-title">2. Dismantle Photos</h3></div>
+                    <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">Before, during, after photos</p>
+                    <button class="btn btn-outline btn-sm" onclick="showUpload('dismantle')">+ Add Photos</button>
+                    <div id="dismantlePhotos"></div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><span class="card-icon">🔍</span><h3 class="card-title">3. Final Verification</h3></div>
+                    <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">Ensure original state restored</p>
+                    <button class="btn btn-outline btn-sm" onclick="showAddChecklist('finalVerify')">+ Add Item</button>
+                    <div id="finalVerifyChecklist"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <!-- Modals -->
+    <div class="modal-overlay" id="projectModal">
+        <div class="modal">
+            <div class="modal-header"><h3 class="modal-title">New Project</h3><button class="modal-close" onclick="hideModal('projectModal')">×</button></div>
+            <div class="form-group"><label>Project Name</label><input type="text" class="form-control" id="projectName" placeholder="Enter project name"></div>
+            <div class="form-group"><label>Client Name</label><input type="text" class="form-control" id="projectClient" placeholder="Enter client name"></div>
+            <div class="form-group"><label>Division</label><select class="form-control" id="projectDivision"></select></div>
+            <div class="form-group"><label>Start Date</label><input type="date" class="form-control" id="projectStartDate"></div>
+            <button class="btn btn-primary btn-block" onclick="saveProject()">Create Project</button>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="userModal">
+        <div class="modal">
+            <div class="modal-header"><h3 class="modal-title">Add User</h3><button class="modal-close" onclick="hideModal('userModal')">×</button></div>
+            <div class="form-group"><label>Name</label><input type="text" class="form-control" id="userName" placeholder="Enter name"></div>
+            <div class="form-group"><label>Email</label><input type="email" class="form-control" id="userEmail" placeholder="Enter email"></div>
+            <div class="form-group"><label>Phone</label><input type="tel" class="form-control" id="userPhone" placeholder="Enter phone"></div>
+            <div class="form-group"><label>Role</label><select class="form-control" id="userRole"><option value="user">User</option><option value="manager">Manager</option><option value="head">Head</option><option value="admin">Admin</option></select></div>
+            <div class="form-group"><label>Division</label><select class="form-control" id="userDivision"></select></div>
+            <button class="btn btn-primary btn-block" onclick="saveUser()">Save User</button>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="divisionModal">
+        <div class="modal">
+            <div class="modal-header"><h3 class="modal-title">Add Division</h3><button class="modal-close" onclick="hideModal('divisionModal')">×</button></div>
+            <div class="form-group"><label>Division Name</label><input type="text" class="form-control" id="divisionName" placeholder="Enter division name"></div>
+            <button class="btn btn-primary btn-block" onclick="saveDivision()">Save Division</button>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="uploadModal">
+        <div class="modal">
+            <div class="modal-header"><h3 class="modal-title" id="uploadTitle">Upload Photos</h3><button class="modal-close" onclick="hideModal('uploadModal')">×</button></div>
+            <div class="form-group"><label>Batch Title</label><input type="text" class="form-control" id="uploadBatchTitle" placeholder="e.g., Morning Survey, Site Layout, etc."></div>
+            <div class="upload-area" onclick="document.getElementById('fileInput').click()"><div class="upload-icon">📷</div><h4>Tap to select photos</h4><p>Single or multiple upload supported</p></div>
+            <input type="file" id="fileInput" multiple accept="image/*" style="display: none;" onchange="handleFiles(this.files)">
+            <div id="previewFiles" class="photo-grid mt-3"></div>
+            <div class="form-group mt-3"><label>Description (optional)</label><textarea class="form-control" id="uploadNote" rows="2" placeholder="Add a description..."></textarea></div>
+            <button class="btn btn-primary btn-block" onclick="doUpload()">Upload</button>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="checklistModal">
+        <div class="modal">
+            <div class="modal-header"><h3 class="modal-title">Add Checklist Items</h3><button class="modal-close" onclick="hideModal('checklistModal')">×</button></div>
+            <div id="checklistItemsList">
+                <div class="form-group" style="display: flex; gap: 8px;">
+                    <input type="text" class="form-control checklist-input" placeholder="Enter item description" style="flex: 1;">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="addChecklistInput()" style="padding: 12px 16px; font-size: 20px;">+</button>
+                </div>
+            </div>
+            <button class="btn btn-primary btn-block" onclick="saveChecklistItems()">Save All Items</button>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="checklistEditModal">
+        <div class="modal">
+            <div class="modal-header"><h3 class="modal-title">Edit Checklist Item</h3><button class="modal-close" onclick="hideModal('checklistEditModal')">×</button></div>
+            <div class="form-group"><label>Item Description</label><input type="text" class="form-control" id="editChecklistText" placeholder="Enter item description"></div>
+            <div style="display: flex; gap: 12px;">
+                <button class="btn btn-outline" onclick="hideModal('checklistEditModal')" style="flex: 1;">Cancel</button>
+                <button class="btn btn-danger" onclick="deleteChecklistItem()" style="flex: 1;">Delete</button>
+                <button class="btn btn-primary" onclick="saveChecklistEdit()" style="flex: 1;">Save</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal">
+            <div class="modal-header"><h3 class="modal-title">My Settings</h3><button class="modal-close" onclick="hideModal('settingsModal')">×</button></div>
+            <div class="form-group"><label>Name</label><input type="text" class="form-control" id="settingsName" placeholder="Your name"></div>
+            <div class="form-group"><label>Email</label><input type="email" class="form-control" id="settingsEmail" placeholder="Your email"></div>
+            <div class="form-group"><label>Phone</label><input type="tel" class="form-control" id="settingsPhone" placeholder="Your phone"></div>
+            <button class="btn btn-primary btn-block" onclick="saveSettings()">Save Changes</button>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="photoViewModal" onclick="if(event.target.id==='photoViewModal')hideModal('photoViewModal')">
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; padding: 60px 20px;">
+            <div style="position: relative; max-width: 100%; text-align: center;">
+                <button class="modal-close" onclick="hideModal('photoViewModal')" style="position: absolute; top: -50px; right: 0; z-index: 10;">×</button>
+                <img id="photoViewImage" style="max-width: 100%; max-height: 70vh; object-fit: contain; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);" src="">
+                <div style="margin-top: 20px; text-align: center;">
+                    <span style="font-size: 13px; color: white; opacity: 0.8;" id="photoViewDate"></span>
+                    <p id="photoViewNote" style="font-size: 14px; color: white; margin-top: 8px;"></p>
+                    <div style="margin-top: 16px; display: flex; justify-content: center; gap: 12px;">
+                        <button class="btn btn-sm" onclick="editPhoto()" style="background: rgba(59, 130, 246, 0.9); color: white; padding: 10px 20px; border-radius: 12px; font-size: 14px; font-weight: 600; border: none; cursor: pointer;">✏️ Edit</button>
+                        <button class="btn btn-sm" onclick="deletePhoto()" style="background: rgba(239, 68, 68, 0.9); color: white; padding: 10px 20px; border-radius: 12px; font-size: 14px; font-weight: 600; border: none; cursor: pointer;">🗑️ Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="photoEditModal">
+        <div class="modal">
+            <div class="modal-header"><h3 class="modal-title">Edit Photo</h3><button class="modal-close" onclick="hideModal('photoEditModal')">×</button></div>
+            <div class="form-group"><label>Batch Title</label><input type="text" class="form-control" id="editBatchTitle" placeholder="e.g., Morning Survey, Site Layout, etc."></div>
+            <div class="form-group"><label>Filename</label><input type="text" class="form-control" id="editPhotoFilename" placeholder="Enter filename"></div>
+            <div class="form-group"><label>Note</label><textarea class="form-control" id="editPhotoNote" rows="3" placeholder="Add a note..."></textarea></div>
+            <button class="btn btn-primary btn-block" onclick="savePhotoEdit()">Save Changes</button>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal" style="max-width: 400px;">
+            <div style="text-align: center;">
+                <div style="width: 64px; height: 64px; background: linear-gradient(135deg, var(--error), #f87171); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 20px;">⚠️</div>
+                <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 12px;">Delete Confirmation</h3>
+                <p id="confirmMessage" style="font-size: 14px; color: var(--text-secondary); margin-bottom: 24px;">Are you sure you want to delete this item?</p>
+                <div style="display: flex; gap: 12px;">
+                    <button class="btn btn-outline" onclick="hideModal('confirmModal')" style="flex: 1;">Cancel</button>
+                    <button class="btn btn-danger" id="confirmBtn" style="flex: 1;">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = '';
+        let currentUser = null;
+        let currentProject = null;
+        let uploadType = null;
+        let checklistType = null;
+        let selectedFiles = [];
+        
+        async function fetchAPI(url, options = {}) {
+            const response = await fetch(API + url, options);
+            if (!response.ok) throw new Error(await response.text());
+            return response.json();
+        }
+        
+        function logout() {
+            localStorage.removeItem('pvprod_user');
+            location.reload();
+        }
+        
+        async function checkAuth() {
+            const userId = localStorage.getItem('pvprod_user');
+            if (userId) {
+                try {
+                    currentUser = await fetchAPI('/api/users/' + userId);
+                    document.getElementById('loginSection').classList.remove('active');
+                    document.getElementById('userBadge').textContent = currentUser.name;
+                    document.getElementById('welcomeName').textContent = currentUser.name;
+                    applyPermissions();
+                    loadDashboard();
+                    loadDivisions();
+                    loadUsers();
+                    loadProfile();
+                    return;
+                } catch (e) { console.error(e); }
+            }
+            document.getElementById('loginSection').classList.add('active');
+            document.getElementById('dashboardSection').classList.remove('active');
+            await populateLoginUsers();
+        }
+        
+        async function populateLoginUsers() {
+            const users = await fetchAPI('/api/users');
+            const select = document.getElementById('loginUser');
+            select.innerHTML = '<option value="">-- Select User --</option>';
+            users.forEach(user => { select.innerHTML += `<option value="${user.id}">${user.name} (${user.role})</option>`; });
+        }
+        
+        async function doLogin() {
+            const userId = document.getElementById('loginUser').value;
+            if (!userId) { alert('Please select a user'); return; }
+            localStorage.setItem('pvprod_user', userId);
+            location.reload();
+        }
+        
+        function applyPermissions() {
+            if (currentUser.role !== 'admin') document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+        }
+        
+        document.querySelectorAll('.nav-btn').forEach(btn => { btn.addEventListener('click', () => showSection(btn.dataset.section)); });
+        document.querySelectorAll('.status-tab').forEach(tab => { tab.addEventListener('click', () => switchTab(tab.dataset.tab)); });
+        
+        function showSection(section) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(section + 'Section').classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector(`.nav-btn[data-section="${section}"]`)?.classList.add('active');
+            if (section === 'projects') loadProjects();
+            if (section === 'master') { loadDivisions(); loadUsers(); }
+        }
+        
+        function switchTab(tabId) {
+            document.querySelectorAll('#projectDetailSection .status-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`#projectDetailSection [data-tab="${tabId}"]`).classList.add('active');
+            document.querySelectorAll('#projectDetailSection > div[id$="Tab"]').forEach(t => t.classList.add('hidden'));
+            document.getElementById(tabId + 'Tab').classList.remove('hidden');
+        }
+        
+        async function loadDashboard() {
+            try {
+                const stats = await fetchAPI('/api/stats');
+                document.getElementById('statProjects').textContent = stats.totalProjects || 0;
+                document.getElementById('statActive').textContent = stats.activeProjects || 0;
+                document.getElementById('statPhotos').textContent = stats.totalPhotos || 0;
+                document.getElementById('statChecklist').textContent = `${stats.checkedItems || 0}/${stats.totalChecklist || 0}`;
+                
+                const projects = await fetchAPI('/api/projects');
+                const recent = projects.slice(0, 3);
+                const container = document.getElementById('recentProjects');
+                if (recent.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><h4>No Projects Yet</h4><p>Create your first project to get started</p></div>';
+                } else {
+                    container.innerHTML = recent.map(p => `<div class="project-card" data-status="${p.status}" onclick="viewProject('${p.id}')"><div class="project-name">${p.name}</div><div class="project-client">${p.client}</div><span class="list-item-badge status-${p.status === 'pre-loading' ? 'pending' : p.status === 'completed' ? 'done' : 'progress'}">${formatStatus(p.status)}</span></div>`).join('');
+                }
+            } catch (e) { console.error(e); }
+        }
+        
+        async function loadDivisions() {
+            try {
+                const divisions = await fetchAPI('/api/divisions');
+                ['filterDivision', 'projectDivision', 'userDivision'].forEach(id => {
+                    const select = document.getElementById(id);
+                    select.innerHTML = id === 'filterDivision' ? '<option value="">All Divisions</option>' : '<option value="">-- Select Division --</option>';
+                    divisions.forEach(d => { select.innerHTML += `<option value="${d.id}">${d.name}</option>`; });
+                });
+                
+                const container = document.getElementById('divisionsList');
+                if (divisions.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><p>No divisions yet</p></div>';
+                } else {
+                    container.innerHTML = divisions.map(d => `<div class="list-item"><div class="list-item-title">${d.name}</div><div class="list-item-sub">Created ${formatDate(d.created_at)}</div>${currentUser.role === 'admin' ? '<button class="btn btn-outline btn-sm mt-3" onclick="deleteDivision(' + d.id + ')" style="color: var(--error);">Delete</button>' : ''}</div>`).join('');
+                }
+            } catch (e) { console.error(e); }
+        }
+        
+        async function loadUsers() {
+            try {
+                const users = await fetchAPI('/api/users');
+                const container = document.getElementById('usersList');
+                container.innerHTML = users.map(u => `<div class="list-item"><div class="list-item-title">${u.name}</div><div class="list-item-sub">${u.email || ''} ${u.phone ? '• ' + u.phone : ''}</div><span class="role-badge role-${u.role}">${u.role}</span> ${currentUser.role === 'admin' ? '<button class="btn btn-outline btn-sm mt-3" onclick="deleteUser(' + u.id + ')" style="color: var(--error);">Delete</button>' : ''}</div>`).join('');
+            } catch (e) { console.error(e); }
+        }
+        
+        function loadProfile() {
+            if (!currentUser) return;
+            document.getElementById('profileInfo').innerHTML = `<div style="text-align: center; margin-bottom: 20px;"><div class="user-avatar" style="width: 80px; height: 80px; font-size: 32px; margin: 0 auto 12px;">${currentUser.name.charAt(0).toUpperCase()}</div><h4 style="font-size: 18px; font-weight: 700;">${currentUser.name}</h4><span class="role-badge role-${currentUser.role}">${currentUser.role}</span>${currentUser.division_name ? '<p style="margin-top: 8px; color: var(--text-secondary);">' + currentUser.division_name + '</p>' : ''}</div><button class="btn btn-secondary btn-block" onclick="editProfile()">Edit Profile</button>`;
+        }
+        
+        function editProfile() {
+            document.getElementById('settingsName').value = currentUser.name || '';
+            document.getElementById('settingsEmail').value = currentUser.email || '';
+            document.getElementById('settingsPhone').value = currentUser.phone || '';
+            showModal('settingsModal');
+        }
+        
+        async function saveSettings() {
+            try {
+                const name = document.getElementById('settingsName').value;
+                const email = document.getElementById('settingsEmail').value;
+                const phone = document.getElementById('settingsPhone').value;
+                await fetchAPI('/api/users/' + currentUser.id + '/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, phone }) });
+                hideModal('settingsModal');
+                showToast('Settings saved!');
+                currentUser.name = name; currentUser.email = email; currentUser.phone = phone;
+                document.getElementById('userBadge').textContent = name;
+                document.getElementById('welcomeName').textContent = name;
+                loadProfile();
+            } catch (e) { alert('Error saving settings'); }
+        }
+        
+        async function loadProjects() {
+            try {
+                const projects = await fetchAPI('/api/projects');
+                const divisionFilter = document.getElementById('filterDivision').value;
+                const statusFilter = document.getElementById('filterStatus').value;
+                let filtered = projects;
+                if (divisionFilter) filtered = filtered.filter(p => p.division_id == divisionFilter);
+                if (statusFilter) filtered = filtered.filter(p => p.status === statusFilter);
+                
+                const container = document.getElementById('projectsList');
+                if (filtered.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><h4>No Projects Found</h4><p>Try adjusting your filters or create a new project</p></div>';
+                } else {
+                    container.innerHTML = filtered.map(p => `<div class="project-card" data-status="${p.status}" onclick="viewProject('${p.id}')"><div class="project-name">${p.name}</div><div class="project-client">${p.client}</div><div class="project-meta"><span class="meta-item">📁 ${p.division_name || 'No Division'}</span><span class="meta-item">📅 ${formatDate(p.start_date)}</span></div><span class="list-item-badge status-${p.status === 'pre-loading' ? 'pending' : p.status === 'completed' ? 'done' : 'progress'}">${formatStatus(p.status)}</span></div>`).join('');
+                }
+            } catch (e) { console.error(e); }
+        }
+        
+        async function saveProject() {
+            try {
+                const name = document.getElementById('projectName').value;
+                const client = document.getElementById('projectClient').value;
+                const division_id = document.getElementById('projectDivision').value;
+                const start_date = document.getElementById('projectStartDate').value;
+                if (!name) { alert('Please enter project name'); return; }
+                await fetchAPI('/api/projects', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, client, division_id, start_date, created_by: currentUser.id }) });
+                hideModal('projectModal');
+                showToast('Project created!');
+                loadProjects();
+            } catch (e) { alert('Error creating project'); }
+        }
+        
+        async function viewProject(id) {
+            try {
+                currentProject = await fetchAPI('/api/projects/' + id);
+                document.getElementById('detailProjectName').textContent = currentProject.name;
+                document.getElementById('detailProjectClient').textContent = currentProject.client;
+                updateProjectProgress();
+                loadProjectDetails();
+                showSection('projectDetail');
+            } catch (e) { console.error(e); }
+        }
+        
+        function updateProjectProgress() {
+            if (!currentProject) return;
+            const types = ['survey', 'design', 'drawing', 'workshop', 'marking', 'installation', 'dismantle'];
+            const pPhotos = currentProject.photos.filter(p => ['survey', 'design', 'drawing', 'workshop'].includes(p.type));
+            const iPhotos = currentProject.photos.filter(p => ['marking', 'installation'].includes(p.type));
+            const oPhotos = currentProject.photos.filter(p => p.type === 'dismantle');
+            document.getElementById('preProgress').style.width = (pPhotos.length > 0 ? 100 : 0) + '%';
+            document.getElementById('inProgress').style.width = (iPhotos.length > 0 ? 100 : 0) + '%';
+            document.getElementById('outProgress').style.width = (oPhotos.length > 0 ? 100 : 0) + '%';
+        }
+        
+        function loadProjectDetails() {
+            if (!currentProject) return;
+            const p = currentProject;
+            renderPhotos('surveyPhotos', p.photos.filter(ph => ph.type === 'survey'));
+            renderPhotos('designImages', p.photos.filter(ph => ph.type === 'design'));
+            renderPhotos('workDrawings', p.photos.filter(ph => ph.type === 'drawing'));
+            renderPhotos('workshopProgress', p.photos.filter(ph => ph.type === 'workshop'));
+            renderChecklist('loadingInChecklist', p.checklist.filter(c => c.type === 'loadingIn'), 'loadingIn');
+            renderPhotos('markingPhotos', p.photos.filter(ph => ph.type === 'marking'));
+            renderPhotos('installationPhotos', p.photos.filter(ph => ph.type === 'installation'));
+            renderChecklist('finalLoadingChecklist', p.checklist.filter(c => c.type === 'finalLoading'), 'finalLoading');
+            renderChecklist('dismantleChecklist', p.checklist.filter(c => c.type === 'dismantle'), 'dismantle');
+            renderPhotos('dismantlePhotos', p.photos.filter(ph => ph.type === 'dismantle'));
+            renderChecklist('finalVerifyChecklist', p.checklist.filter(c => c.type === 'finalVerify'), 'finalVerify');
+        }
+        
+        function renderPhotos(containerId, photos) {
+            const container = document.getElementById(containerId);
+            if (photos.length === 0) {
+                container.innerHTML = '<div class="empty-state" style="padding: 30px;"><p>No photos yet</p></div>';
+            } else {
+                const grouped = photos.reduce((acc, photo) => {
+                    const date = photo.created_at.split('T')[0];
+                    if (!acc[date]) acc[date] = [];
+                    acc[date].push(photo);
+                    return acc;
+                }, {});
+                container.innerHTML = Object.keys(grouped).map(date => {
+                    const batchTitle = grouped[date][0].note || '';
+                    return `<div style="margin-bottom: 16px;"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;"><div class="photo-date">📅 <span class="date-badge">${formatDate(date)}</span></div>${batchTitle ? `<div style="background: linear-gradient(135deg, var(--secondary), #60a5fa); color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;">${batchTitle}</div>` : ''}</div><div class="photo-grid">${grouped[date].map(photo => `<div class="photo-item" onclick="viewPhoto('${photo.id}')"><img src="${photo.filepath}" alt=""></div>`).join('')}</div></div>`;
+                }).join('');
+            }
+        }
+        
+        function renderChecklist(containerId, items, type) {
+            const container = document.getElementById(containerId);
+            if (items.length === 0) {
+                container.innerHTML = '<div class="empty-state" style="padding: 30px;"><p>No items yet</p></div>';
+            } else {
+                container.innerHTML = items.map(item => `<div class="checklist-item ${item.checked ? 'checked' : ''}"><div class="checklist-checkbox" onclick="toggleChecklist('${item.id}', '${type}')">${item.checked ? '✓' : ''}</div><div class="checklist-content" onclick="toggleChecklist('${item.id}', '${type}')"><div class="checklist-title">${item.text}</div><div class="checklist-meta">Added ${formatDate(item.created_at)}</div></div><button class="btn btn-outline btn-sm" onclick="editChecklistItem('${item.id}', '${type}')" style="padding: 6px 12px; margin-left: auto; align-self: center;">✏️</button></div>`).join('');
+            }
+        }
+        
+        let currentPhoto = null;
+        let currentChecklistItem = null;
+        let currentChecklistType = null;
+        
+        function editChecklistItem(itemId, type) {
+            const item = currentProject.checklist.find(i => i.id == itemId);
+            if (!item) return;
+            currentChecklistItem = item;
+            currentChecklistType = type;
+            document.getElementById('editChecklistText').value = item.text || '';
+            showModal('checklistEditModal');
+        }
+        
+        async function saveChecklistEdit() {
+            if (!currentChecklistItem) return;
+            const text = document.getElementById('editChecklistText').value;
+            if (!text) { alert('Please enter item description'); return; }
+            try {
+                await fetchAPI('/api/checklist/' + currentChecklistItem.id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ checked: currentChecklistItem.checked, text }) });
+                hideModal('checklistEditModal');
+                showToast('Item updated!');
+                viewProject(currentProject.id);
+            } catch (e) { alert('Error updating item'); }
+        }
+        
+        function deleteChecklistItem() {
+            if (!currentChecklistItem) return;
+            showConfirm('Are you sure you want to delete this item?', async () => {
+                try {
+                    await fetchAPI('/api/checklist/' + currentChecklistItem.id, { method: 'DELETE' });
+                    hideModal('checklistEditModal');
+                    showToast('Item deleted!');
+                    viewProject(currentProject.id);
+                } catch (e) { alert('Error deleting item'); }
+            });
+        }
+        
+        function viewPhoto(photoId) {
+            const photo = currentProject.photos.find(p => p.id == photoId);
+            if (photo) {
+                currentPhoto = photo;
+                document.getElementById('photoViewImage').src = photo.filepath;
+                document.getElementById('photoViewDate').textContent = formatDate(photo.created_at);
+                document.getElementById('photoViewNote').textContent = photo.note || 'No note';
+                showModal('photoViewModal');
+            }
+        }
+        
+        function editPhoto() {
+            if (!currentPhoto) return;
+            document.getElementById('editBatchTitle').value = currentPhoto.note || '';
+            document.getElementById('editPhotoFilename').value = currentPhoto.filename || '';
+            hideModal('photoViewModal');
+            showModal('photoEditModal');
+        }
+        
+        async function savePhotoEdit() {
+            if (!currentPhoto) return;
+            const note = document.getElementById('editBatchTitle').value;
+            const filename = document.getElementById('editPhotoFilename').value;
+            try {
+                await fetchAPI('/api/photos/' + currentPhoto.id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ note, filename }) });
+                hideModal('photoEditModal');
+                showToast('Photo updated!');
+                viewProject(currentProject.id);
+            } catch (e) { alert('Error updating photo'); }
+        }
+        
+        let confirmCallback = null;
+        
+        function showConfirm(message, callback) {
+            confirmCallback = callback;
+            document.getElementById('confirmMessage').textContent = message;
+            document.getElementById('confirmBtn').onclick = () => {
+                hideModal('confirmModal');
+                if (confirmCallback) confirmCallback();
+            };
+            showModal('confirmModal');
+        }
+        
+        async function deletePhoto() {
+            if (!currentPhoto) return;
+            showConfirm('Are you sure you want to delete this photo?', async () => {
+                try {
+                    await fetchAPI('/api/photos/' + currentPhoto.id, { method: 'DELETE' });
+                    hideModal('photoViewModal');
+                    showToast('Photo deleted!');
+                    viewProject(currentProject.id);
+                } catch (e) { alert('Error deleting photo'); }
+            });
+        }
+        
+        function showUpload(type) {
+            uploadType = type;
+            selectedFiles = [];
+            document.getElementById('previewFiles').innerHTML = '';
+            document.getElementById('uploadNote').value = '';
+            const titles = { survey: 'Survey Photos', design: 'Design Images', drawing: 'Work Drawings', workshop: 'Workshop Photos', marking: 'Marking Photos', installation: 'Installation Photos', dismantle: 'Dismantle Photos' };
+            document.getElementById('uploadTitle').textContent = titles[type] || 'Upload Photos';
+            showModal('uploadModal');
+        }
+        
+        function handleFiles(files) {
+            selectedFiles = Array.from(files);
+            const preview = document.getElementById('previewFiles');
+            preview.innerHTML = '';
+            selectedFiles.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => { preview.innerHTML += `<div class="photo-item"><img src="${e.target.result}" alt="Preview"></div>`; };
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        async function doUpload() {
+            if (selectedFiles.length === 0) { alert('Please select at least one photo'); return; }
+            const note = document.getElementById('uploadNote').value;
+            const formData = new FormData();
+            formData.append('type', uploadType);
+            formData.append('note', note);
+            selectedFiles.forEach(file => { formData.append('files', file); });
+            try {
+                await fetch('/api/projects/' + currentProject.id + '/photos', { method: 'POST', body: formData });
+                hideModal('uploadModal');
+                showToast('Photos uploaded!');
+                viewProject(currentProject.id);
+            } catch (e) { alert('Error uploading photos'); }
+        }
+        
+        function showAddChecklist(type) {
+            checklistType = type;
+            document.getElementById('checklistItemsList').innerHTML = `
+                <div class="form-group" style="display: flex; gap: 8px; margin-bottom: 12px;">
+                    <input type="text" class="form-control checklist-input" placeholder="Enter item description" style="flex: 1;">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="addChecklistInput()" style="padding: 12px 16px; font-size: 20px;">+</button>
+                </div>
+            `;
+            showModal('checklistModal');
+        }
+        
+        function addChecklistInput() {
+            const container = document.getElementById('checklistItemsList');
+            const newInput = document.createElement('div');
+            newInput.className = 'form-group';
+            newInput.style = 'display: flex; gap: 8px; margin-bottom: 12px;';
+            newInput.innerHTML = `
+                <input type="text" class="form-control checklist-input" placeholder="Enter item description" style="flex: 1;">
+                <button type="button" class="btn btn-outline btn-sm" onclick="this.parentElement.remove()" style="padding: 12px 16px; font-size: 16px; color: var(--error);">×</button>
+            `;
+            container.appendChild(newInput);
+        }
+        
+        async function saveChecklistItems() {
+            const inputs = document.querySelectorAll('#checklistItemsList .checklist-input');
+            const items = [];
+            inputs.forEach(input => {
+                if (input.value.trim()) items.push(input.value.trim());
+            });
+            
+            if (items.length === 0) { alert('Please enter at least one item'); return; }
+            
+            try {
+                for (const text of items) {
+                    await fetchAPI('/api/projects/' + currentProject.id + '/checklist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: checklistType, text }) });
+                }
+                hideModal('checklistModal');
+                showToast(items.length + ' item(s) added!');
+                viewProject(currentProject.id);
+            } catch (e) { alert('Error adding items'); }
+        }
+        
+        async function toggleChecklist(itemId, type) {
+            const item = currentProject.checklist.find(i => i.id == itemId);
+            if (!item) return;
+            try {
+                await fetchAPI('/api/checklist/' + itemId, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ checked: !item.checked }) });
+                viewProject(currentProject.id);
+            } catch (e) { console.error(e); }
+        }
+        
+        function showAddDivision() {
+            document.getElementById('divisionName').value = '';
+            showModal('divisionModal');
+        }
+        
+        async function saveDivision() {
+            const name = document.getElementById('divisionName').value;
+            if (!name) { alert('Please enter division name'); return; }
+            try {
+                await fetchAPI('/api/divisions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+                hideModal('divisionModal');
+                showToast('Division added!');
+                loadDivisions();
+            } catch (e) { alert('Error adding division'); }
+        }
+        
+        async function deleteDivision(id) {
+            showConfirm('Are you sure you want to delete this division?', async () => {
+                try {
+                    await fetchAPI('/api/divisions/' + id, { method: 'DELETE' });
+                    showToast('Division deleted!');
+                    loadDivisions();
+                } catch (e) { alert('Error deleting division'); }
+            });
+        }
+        
+        async function saveUser() {
+            const name = document.getElementById('userName').value;
+            const email = document.getElementById('userEmail').value;
+            const phone = document.getElementById('userPhone').value;
+            const role = document.getElementById('userRole').value;
+            const division_id = document.getElementById('userDivision').value;
+            if (!name) { alert('Please enter user name'); return; }
+            try {
+                await fetchAPI('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, phone, role, division_id }) });
+                hideModal('userModal');
+                showToast('User added!');
+                loadUsers();
+            } catch (e) { alert('Error adding user'); }
+        }
+        
+        async function deleteUser(id) {
+            showConfirm('Are you sure you want to delete this user?', async () => {
+                try {
+                    await fetchAPI('/api/users/' + id, { method: 'DELETE' });
+                    showToast('User deleted!');
+                    loadUsers();
+                } catch (e) { alert('Error deleting user'); }
+            });
+        }
+        
+        document.querySelectorAll('#masterSection .status-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('#masterSection .status-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                if (tab.dataset.tab === 'divisions') { document.getElementById('divisionsTab').classList.remove('hidden'); document.getElementById('usersTab').classList.add('hidden'); }
+                else { document.getElementById('divisionsTab').classList.add('hidden'); document.getElementById('usersTab').classList.remove('hidden'); }
+            });
+        });
+        
+        function showModal(id) { document.getElementById(id).classList.add('active'); }
+        function hideModal(id) { document.getElementById(id).classList.remove('active'); }
+        document.querySelectorAll('.modal-overlay').forEach(m => { m.addEventListener('click', (e) => { if (e.target === m) m.classList.remove('active'); }); });
+        
+        function formatDate(d) { if (!d) return '-'; const date = new Date(d); return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
+        function formatStatus(s) { return (s || '').replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()); }
+        function showToast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3000); }
+        
+        document.addEventListener('DOMContentLoaded', checkAuth);
+    </script>
+</body>
+</html>
