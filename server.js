@@ -361,7 +361,9 @@ app.get('/api/projects/:id', (req, res) => {
 app.put('/api/projects/:id', (req, res) => {
     try {
         const { name, client, location, division_id, start_date, end_date, status } = req.body;
-        db.prepare('UPDATE projects SET name = ?, client = ?, location = ?, division_id = ?, start_date = ?, end_date = ?, status = ? WHERE id = ?').run(name, client, location, division_id, start_date, end_date, status, req.params.id);
+        // Handle null/empty division_id to avoid FOREIGN KEY constraint
+        const divId = (division_id === '' || division_id === null || division_id === undefined) ? null : division_id;
+        db.prepare('UPDATE projects SET name = ?, client = ?, location = ?, division_id = ?, start_date = ?, end_date = ?, status = ? WHERE id = ?').run(name, client, location, divId, start_date, end_date, status, req.params.id);
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
