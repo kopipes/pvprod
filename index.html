@@ -1557,11 +1557,18 @@
             const note = document.getElementById('editBatchTitle').value;
             const filename = document.getElementById('editPhotoFilename').value;
             try {
-                await fetchAPI('/api/photos/' + currentPhoto.id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ note, filename }) });
+                // Get all photos in the same batch (same date)
+                const batchDate = currentPhoto.created_at.split('T')[0];
+                const batchPhotos = currentProject.photos.filter(p => p.created_at.split('T')[0] === batchDate);
+                
+                // Update all photos in the batch
+                for (const photo of batchPhotos) {
+                    await fetchAPI('/api/photos/' + photo.id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ note, filename: photo.filename }) });
+                }
                 hideModal('photoEditModal');
-                showToast('Photo updated!');
+                showToast(batchPhotos.length + ' photo(s) updated!');
                 viewProject(currentProject.id);
-            } catch (e) { alert('Error updating photo'); }
+            } catch (e) { alert('Error updating photos'); }
         }
         
         let confirmCallback = null;
