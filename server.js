@@ -12,7 +12,7 @@ function hashPassword(password) {
 }
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || process.argv[2] || 3000;
 
 // Create uploads directory
 const uploadsDir = path.join(__dirname, 'uploads');
