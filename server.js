@@ -271,8 +271,12 @@ app.post('/api/users', (req, res) => {
 
 app.put('/api/users/:id', (req, res) => {
     try {
-        const { name, email, phone, role, division_id } = req.body;
+        const { name, email, phone, role, division_id, password } = req.body;
         db.prepare('UPDATE users SET name = ?, email = ?, phone = ?, role = ?, division_id = ? WHERE id = ?').run(name, email, phone, role, division_id || null, req.params.id);
+        if (password) {
+            const hashedPassword = hashPassword(password);
+            db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hashedPassword, req.params.id);
+        }
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });

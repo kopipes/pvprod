@@ -960,6 +960,7 @@
             <div class="form-group"><label>Name</label><input type="text" class="form-control" id="userName" placeholder="Enter name"></div>
             <div class="form-group"><label>Email</label><input type="email" class="form-control" id="userEmail" placeholder="Enter email"></div>
             <div class="form-group"><label>Phone</label><input type="tel" class="form-control" id="userPhone" placeholder="Enter phone"></div>
+            <div class="form-group"><label>Password</label><input type="password" class="form-control" id="userPassword" placeholder="Enter password (min 6 chars)"></div>
             <div class="form-group"><label>Role</label><select class="form-control" id="userRole"><option value="user">User</option><option value="manager">Manager</option><option value="head">Head</option><option value="admin">Admin</option></select></div>
             <div class="form-group"><label>Division</label><select class="form-control" id="userDivision"></select></div>
             <button class="btn btn-primary btn-block" onclick="saveUser()">Save User</button>
@@ -981,6 +982,7 @@
             <div class="form-group"><label>Email</label><input type="email" class="form-control" id="editUserEmail" placeholder="Enter email"></div>
             <div class="form-group"><label>Phone</label><input type="tel" class="form-control" id="editUserPhone" placeholder="Enter phone"></div>
             <div class="form-group"><label>Role</label><select class="form-control" id="editUserRole"><option value="user">User</option><option value="manager">Manager</option><option value="head">Head</option><option value="admin">Admin</option></select></div>
+            <div class="form-group"><label>Password <small style="color: var(--text-secondary);">(leave blank to keep current)</small></label><input type="password" class="form-control" id="editUserPassword" placeholder="Enter new password"></div>
             <div class="form-group"><label>Division</label><select class="form-control" id="editUserDivision"></select></div>
             <button class="btn btn-primary btn-block" onclick="saveUserEdit()">Save Changes</button>
         </div>
@@ -1211,7 +1213,7 @@
                 if (divisions.length === 0) {
                     container.innerHTML = '<div class="empty-state"><p>No divisions yet</p></div>';
                 } else {
-                    container.innerHTML = divisions.map(d => `<div class="list-item"><div class="list-item-title">${d.name}</div><div class="list-item-sub">Created ${formatDate(d.created_at)}</div><div style="display: flex; gap: 8px; margin-top: 12px;">${currentUser.role === 'admin' ? `<button class="btn btn-outline btn-sm" onclick="showEditDivision(${d.id}, '${d.name}')" style="flex: 1;">✏️ Edit</button><button class="btn btn-outline btn-sm" onclick="deleteDivision(' + d.id + ')" style="color: var(--error);">Delete</button>` : ''}</div></div>`).join('');
+                    container.innerHTML = divisions.map(d => `<div class="list-item"><div class="list-item-title">${d.name}</div><div class="list-item-sub">Created ${formatDate(d.created_at)}</div><div style="display: flex; gap: 8px; margin-top: 12px;">${currentUser.role === 'admin' ? `<button class="btn btn-outline btn-sm" onclick="showEditDivision(${d.id}, '${d.name}')" style="flex: 1;">✏️ Edit</button><button class="btn btn-outline btn-sm" onclick="deleteDivision(${d.id})" style="color: var(--error);">Delete</button>` : ''}</div></div>`).join('');
                 }
             } catch (e) { console.error(e); }
         }
@@ -1266,10 +1268,11 @@
             const email = document.getElementById('editUserEmail').value;
             const phone = document.getElementById('editUserPhone').value;
             const role = document.getElementById('editUserRole').value;
+            const password = document.getElementById('editUserPassword').value;
             const division_id = document.getElementById('editUserDivision').value;
             if (!name) { alert('Please enter user name'); return; }
             try {
-                await fetchAPI('/api/users/' + editingUserId, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, phone, role, division_id }) });
+                await fetchAPI('/api/users/' + editingUserId, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, phone, password, role, division_id }) });
                 hideModal('userEditModal');
                 showToast('User updated!');
                 loadUsers();
@@ -1777,10 +1780,11 @@
             const email = document.getElementById('userEmail').value;
             const phone = document.getElementById('userPhone').value;
             const role = document.getElementById('userRole').value;
+            const password = document.getElementById('userPassword').value;
             const division_id = document.getElementById('userDivision').value;
             if (!name) { alert('Please enter user name'); return; }
             try {
-                await fetchAPI('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, phone, role, division_id }) });
+                await fetchAPI('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, phone, password, role, division_id }) });
                 hideModal('userModal');
                 showToast('User added!');
                 loadUsers();
