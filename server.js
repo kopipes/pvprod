@@ -221,6 +221,9 @@ app.delete('/api/divisions/:id', (req, res) => {
     try {
         const body = req.body || {};
         const { user_name, division_name } = body;
+        // Clear foreign key references first
+        db.prepare('UPDATE users SET division_id = NULL WHERE division_id = ?').run(req.params.id);
+        db.prepare('UPDATE projects SET division_id = NULL WHERE division_id = ?').run(req.params.id);
         db.prepare('DELETE FROM divisions WHERE id = ?').run(req.params.id);
         if (user_name) logAudit(null, user_name, 'DELETE', 'Division', division_name, 'Deleted division');
         res.json({ success: true });
