@@ -60,6 +60,7 @@ db.exec(`
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         client TEXT,
+        location TEXT,
         division_id INTEGER,
         start_date DATE,
         end_date DATE,
@@ -265,12 +266,12 @@ app.get('/api/projects', (req, res) => {
 
 app.post('/api/projects', (req, res) => {
     try {
-        const { name, client, division_id, start_date, created_by } = req.body;
+        const { name, client, location, division_id, start_date, created_by } = req.body;
         const result = db.prepare(`
-            INSERT INTO projects (name, client, division_id, start_date, created_by) 
-            VALUES (?, ?, ?, ?, ?)
-        `).run(name, client, division_id, start_date, created_by);
-        res.json({ id: result.lastInsertRowid, name, client, division_id, start_date, status: 'pre-loading' });
+            INSERT INTO projects (name, client, location, division_id, start_date, created_by) 
+            VALUES (?, ?, ?, ?, ?, ?)
+        `).run(name, client, location, division_id, start_date, created_by);
+        res.json({ id: result.lastInsertRowid, name, client, location, division_id, start_date, status: 'pre-loading' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -300,8 +301,8 @@ app.get('/api/projects/:id', (req, res) => {
 
 app.put('/api/projects/:id', (req, res) => {
     try {
-        const { name, client, division_id, start_date, end_date, status } = req.body;
-        db.prepare('UPDATE projects SET name = ?, client = ?, division_id = ?, start_date = ?, end_date = ?, status = ? WHERE id = ?').run(name, client, division_id, start_date, end_date, status, req.params.id);
+        const { name, client, location, division_id, start_date, end_date, status } = req.body;
+        db.prepare('UPDATE projects SET name = ?, client = ?, location = ?, division_id = ?, start_date = ?, end_date = ?, status = ? WHERE id = ?').run(name, client, location, division_id, start_date, end_date, status, req.params.id);
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
