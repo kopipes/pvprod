@@ -219,7 +219,8 @@ app.put('/api/divisions/:id', (req, res) => {
 
 app.delete('/api/divisions/:id', (req, res) => {
     try {
-        const { user_name, division_name } = req.body;
+        const body = req.body || {};
+        const { user_name, division_name } = body;
         db.prepare('DELETE FROM divisions WHERE id = ?').run(req.params.id);
         if (user_name) logAudit(null, user_name, 'DELETE', 'Division', division_name, 'Deleted division');
         res.json({ success: true });
