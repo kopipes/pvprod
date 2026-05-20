@@ -260,7 +260,9 @@ app.get('/api/users/:id', (req, res) => {
 app.post('/api/users', (req, res) => {
     try {
         const { name, email, phone, role, division_id } = req.body;
-        const result = db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run(name, email, phone, role, division_id || null);
+        // Default password for admin-created users
+        const defaultPassword = hashPassword('pvprod123');
+        const result = db.prepare('INSERT INTO users (name, email, phone, role, division_id, password, status) VALUES (?, ?, ?, ?, ?, ?, ?)').run(name, email, phone, role, division_id || null, defaultPassword, 'approved');
         res.json({ id: result.lastInsertRowid, name, email, phone, role, division_id });
     } catch (error) {
         res.status(500).json({ error: error.message });
