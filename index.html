@@ -1547,6 +1547,7 @@
             if (!currentPhoto) return;
             document.getElementById('editBatchTitle').value = currentPhoto.note || '';
             document.getElementById('editPhotoFilename').value = currentPhoto.filename || '';
+            document.getElementById('editPhotoNote').value = currentPhoto.note || '';
             hideModal('photoViewModal');
             showModal('photoEditModal');
         }
