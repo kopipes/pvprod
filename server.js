@@ -101,6 +101,18 @@ db.exec(`
         FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
+    
+    CREATE TABLE IF NOT EXISTS audit_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        user_name TEXT,
+        action TEXT NOT NULL,
+        entity_type TEXT NOT NULL,
+        entity_name TEXT,
+        details TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+    );
 `);
 
 // Insert default data
@@ -152,8 +164,9 @@ app.get('/api/divisions', (req, res) => {
 
 app.post('/api/divisions', (req, res) => {
     try {
-        const { name } = req.body;
+        const { name, user_name } = req.body;
         const result = db.prepare('INSERT INTO divisions (name) VALUES (?)').run(name);
+        if (user_name) logAudit(null, user_name, 'CREATE', 'Division', name, 'Created new division');
         res.json({ id: result.lastInsertRowid, name });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -162,8 +175,10 @@ app.post('/api/divisions', (req, res) => {
 
 app.put('/api/divisions/:id', (req, res) => {
     try {
-        const { name } = req.body;
+        const { name, user_name } = req.body;
+        const old = db.prepare('SELECT name FROM divisions WHERE id = ?').get(req.params.id);
         db.prepare('UPDATE divisions SET name = ? WHERE id = ?').run(name, req.params.id);
+        if (user_name) logAudit(null, user_name, 'UPDATE', 'Division', name, `Changed from "${old?.name}" to "${name}"`);
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -172,7 +187,9 @@ app.put('/api/divisions/:id', (req, res) => {
 
 app.delete('/api/divisions/:id', (req, res) => {
     try {
+        const { user_name, division_name } = req.body;
         db.prepare('DELETE FROM divisions WHERE id = ?').run(req.params.id);
+        if (user_name) logAudit(null, user_name, 'DELETE', 'Division', division_name, 'Deleted division');
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -457,6 +474,32 @@ app.delete('/api/projects/:id/members/:userId', (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+// Audit Logs
+app.get('/api/audit', (req, res) => {
+    try {
+        const logs = db.prepare(`
+            SELECT * FROM audit_logs 
+            ORDER BY created_at DESC 
+            LIMIT 100
+        `).all();
+        res.json(logs);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Helper function to log audit
+function logAudit(userId, userName, action, entityType, entityName, details) {
+    try {
+        db.prepare(`
+            INSERT INTO audit_logs (user_id, user_name, action, entity_type, entity_name, details)
+            VALUES (?, ?, ?, ?, ?, ?)
+        `).run(userId, userName, action, entityType, entityName, details);
+    } catch (error) {
+        console.error('Audit log error:', error.message);
+    }
+}
 
 // Stats
 app.get('/api/stats', (req, res) => {

@@ -781,6 +781,7 @@
             <div class="status-tabs">
                 <button class="status-tab active" data-tab="divisions">Divisions</button>
                 <button class="status-tab" data-tab="users">Users</button>
+                <button class="status-tab" data-tab="audit">📋 Audit Log</button>
             </div>
             <div id="divisionsTab">
                 <button class="btn btn-secondary btn-block mb-2" onclick="showAddDivision()">+ Add Division</button>
@@ -790,6 +791,9 @@
                 <div class="form-group" style="margin-bottom: 12px;"><input type="text" class="form-control" id="userSearchInput" placeholder="Search users..." oninput="filterUsers()"></div>
                 <button class="btn btn-secondary btn-block mb-2" onclick="showModal('userModal')">+ Add User</button>
                 <div id="usersList"></div>
+            </div>
+            <div id="auditTab" class="hidden">
+                <div id="auditList"></div>
             </div>
         </section>
         
@@ -1705,11 +1709,11 @@
             if (!name) { alert('Please enter division name'); return; }
             try {
                 if (editingDivisionId) {
-                    await fetchAPI('/api/divisions/' + editingDivisionId, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+                    await fetchAPI('/api/divisions/' + editingDivisionId, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, user_name: currentUser.name }) });
                     hideModal('divisionModal');
                     showToast('Division updated!');
                 } else {
-                    await fetchAPI('/api/divisions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+                    await fetchAPI('/api/divisions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, user_name: currentUser.name }) });
                     hideModal('divisionModal');
                     showToast('Division added!');
                 }
@@ -1756,10 +1760,27 @@
             tab.addEventListener('click', () => {
                 document.querySelectorAll('#masterSection .status-tab').forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
-                if (tab.dataset.tab === 'divisions') { document.getElementById('divisionsTab').classList.remove('hidden'); document.getElementById('usersTab').classList.add('hidden'); }
-                else { document.getElementById('divisionsTab').classList.add('hidden'); document.getElementById('usersTab').classList.remove('hidden'); }
+                document.getElementById('divisionsTab').classList.add('hidden');
+                document.getElementById('usersTab').classList.add('hidden');
+                document.getElementById('auditTab').classList.add('hidden');
+                if (tab.dataset.tab === 'divisions') { document.getElementById('divisionsTab').classList.remove('hidden'); }
+                else if (tab.dataset.tab === 'users') { document.getElementById('usersTab').classList.remove('hidden'); }
+                else if (tab.dataset.tab === 'audit') { document.getElementById('auditTab').classList.remove('hidden'); loadAudit(); }
             });
         });
+        
+        async function loadAudit() {
+            try {
+                const logs = await fetchAPI('/api/audit');
+                const container = document.getElementById('auditList');
+                if (logs.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><p>No audit logs yet</p></div>';
+                } else {
+                    const actionColors = { CREATE: '#10b981', UPDATE: '#3b82f6', DELETE: '#ef4444' };
+                    container.innerHTML = logs.map(log => `<div class="list-item" style="border-left: 4px solid ${actionColors[log.action] || '#64748b'}"><div class="list-item-title">${log.user_name || 'System'}</div><div class="list-item-sub"><span style="font-weight: 600; color: ${actionColors[log.action]}">${log.action}</span> ${log.entity_type}: <strong>${log.entity_name || '-'}</strong></div><div class="list-item-sub" style="margin-top: 8px;">${log.details || ''}</div><div class="list-item-sub" style="opacity: 0.6; font-size: 11px; margin-top: 4px;">${formatDate(log.created_at)}</div></div>`).join('');
+                }
+            } catch (e) { console.error(e); }
+        }
         
         function showModal(id) { document.getElementById(id).classList.add('active'); }
         function hideModal(id) { document.getElementById(id).classList.remove('active'); }
