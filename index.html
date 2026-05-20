@@ -710,20 +710,28 @@
     </nav>
     
     <main class="main">
-        <section id="loginSection" class="section">
+        <section id="loginSection" class="section active">
             <div class="card" style="margin-top: 30px;">
                 <div style="text-align: center; margin-bottom: 30px;">
                     <div style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--accent), #fb923c); border-radius: 24px; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 800; color: white; margin: 0 auto 20px; box-shadow: 0 8px 30px rgba(249, 115, 22, 0.4);">P</div>
                     <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 8px;">Welcome to PVPROD</h2>
                     <p style="color: var(--text-secondary);">Production Management System</p>
                 </div>
-                <div class="form-group">
-                    <label>Select User</label>
-                    <select class="form-control" id="loginUser">
-                        <option value="">-- Select User --</option>
-                    </select>
+                <div id="loginFormContainer">
+                    <div class="form-group"><label>Email</label><input type="email" class="form-control" id="loginEmail" placeholder="Enter your email"></div>
+                    <div class="form-group"><label>Password</label><input type="password" class="form-control" id="loginPassword" placeholder="Enter your password"></div>
+                    <button class="btn btn-primary btn-block" onclick="doLogin()">Login →</button>
+                    <p style="text-align: center; margin-top: 16px; color: var(--text-secondary);">Don't have an account? <a href="#" onclick="showRegister(); return false;" style="color: var(--secondary); font-weight: 600;">Register</a></p>
                 </div>
-                <button class="btn btn-primary btn-block" onclick="doLogin()">Continue →</button>
+                <div id="registerFormContainer" class="hidden">
+                    <div class="form-group"><label>Full Name</label><input type="text" class="form-control" id="regName" placeholder="Enter your name"></div>
+                    <div class="form-group"><label>Email</label><input type="email" class="form-control" id="regEmail" placeholder="Enter your email"></div>
+                    <div class="form-group"><label>Phone</label><input type="tel" class="form-control" id="regPhone" placeholder="Enter your phone (optional)"></div>
+                    <div class="form-group"><label>Password</label><input type="password" class="form-control" id="regPassword" placeholder="Create a password"></div>
+                    <div class="form-group"><label>Confirm Password</label><input type="password" class="form-control" id="regConfirm" placeholder="Confirm your password"></div>
+                    <button class="btn btn-primary btn-block" onclick="doRegister()">Register</button>
+                    <p style="text-align: center; margin-top: 16px; color: var(--text-secondary);">Already have an account? <a href="#" onclick="showLogin(); return false;" style="color: var(--secondary); font-weight: 600;">Login</a></p>
+                </div>
             </div>
         </section>
         
@@ -781,6 +789,7 @@
             <div class="status-tabs">
                 <button class="status-tab active" data-tab="divisions">Divisions</button>
                 <button class="status-tab" data-tab="users">Users</button>
+                <button class="status-tab" data-tab="pending">⏳ Pending</button>
                 <button class="status-tab" data-tab="audit">📋 Audit Log</button>
             </div>
             <div id="divisionsTab">
@@ -795,6 +804,9 @@
             <div id="auditTab" class="hidden">
                 <div class="form-group" style="margin-bottom: 12px;"><input type="text" class="form-control" id="auditSearchInput" placeholder="Search audit logs..." oninput="filterAudit()"></div>
                 <div id="auditList"></div>
+            </div>
+            <div id="pendingTab" class="hidden">
+                <div id="pendingList"></div>
             </div>
         </section>
         
@@ -1082,6 +1094,48 @@
             location.reload();
         }
         
+        function showRegister() {
+            document.getElementById('loginFormContainer').classList.add('hidden');
+            document.getElementById('registerFormContainer').classList.remove('hidden');
+        }
+        
+        function showLogin() {
+            document.getElementById('registerFormContainer').classList.add('hidden');
+            document.getElementById('loginFormContainer').classList.remove('hidden');
+        }
+        
+        async function doLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            if (!email || !password) { alert('Please enter email and password'); return; }
+            try {
+                const user = await fetchAPI('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
+                localStorage.setItem('pvprod_user', user.id);
+                location.reload();
+            } catch (e) { 
+                try { const err = JSON.parse(e.message); alert(err.error || 'Login failed'); }
+                catch (x) { alert('Login failed'); }
+            }
+        }
+        
+        async function doRegister() {
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            const phone = document.getElementById('regPhone').value;
+            const password = document.getElementById('regPassword').value;
+            const confirm = document.getElementById('regConfirm').value;
+            if (!name || !email || !password) { alert('Please fill in all required fields'); return; }
+            if (password !== confirm) { alert('Passwords do not match'); return; }
+            try {
+                await fetchAPI('/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, phone, password }) });
+                alert('Registration successful! Please wait for admin/manager approval.');
+                showLogin();
+            } catch (e) { 
+                try { const err = JSON.parse(e.message); alert(err.error || 'Registration failed'); }
+                catch (x) { alert('Registration failed'); }
+            }
+        }
+        
         async function checkAuth() {
             const userId = localStorage.getItem('pvprod_user');
             if (userId) {
@@ -1100,21 +1154,6 @@
             }
             document.getElementById('loginSection').classList.add('active');
             document.getElementById('dashboardSection').classList.remove('active');
-            await populateLoginUsers();
-        }
-        
-        async function populateLoginUsers() {
-            const users = await fetchAPI('/api/users');
-            const select = document.getElementById('loginUser');
-            select.innerHTML = '<option value="">-- Select User --</option>';
-            users.forEach(user => { select.innerHTML += `<option value="${user.id}">${user.name} (${user.role})</option>`; });
-        }
-        
-        async function doLogin() {
-            const userId = document.getElementById('loginUser').value;
-            if (!userId) { alert('Please select a user'); return; }
-            localStorage.setItem('pvprod_user', userId);
-            location.reload();
         }
         
         function applyPermissions() {
@@ -1765,11 +1804,47 @@
                 document.getElementById('divisionsTab').classList.add('hidden');
                 document.getElementById('usersTab').classList.add('hidden');
                 document.getElementById('auditTab').classList.add('hidden');
+                document.getElementById('pendingTab').classList.add('hidden');
                 if (tab.dataset.tab === 'divisions') { document.getElementById('divisionsTab').classList.remove('hidden'); }
                 else if (tab.dataset.tab === 'users') { document.getElementById('usersTab').classList.remove('hidden'); }
                 else if (tab.dataset.tab === 'audit') { document.getElementById('auditTab').classList.remove('hidden'); loadAudit(); }
+                else if (tab.dataset.tab === 'pending') { document.getElementById('pendingTab').classList.remove('hidden'); loadPending(); }
             });
         });
+        
+        async function loadPending() {
+            if (currentUser.role !== 'admin' && currentUser.role !== 'manager' && currentUser.role !== 'head') {
+                document.getElementById('pendingList').innerHTML = '<div class="empty-state"><p>You do not have permission to view pending registrations</p></div>';
+                return;
+            }
+            try {
+                const pending = await fetchAPI('/api/auth/pending');
+                const container = document.getElementById('pendingList');
+                if (pending.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><p>No pending registrations</p></div>';
+                } else {
+                    container.innerHTML = pending.map(u => `<div class="list-item"><div class="list-item-title">${u.name}</div><div class="list-item-sub">${u.email || ''} ${u.phone ? '• ' + u.phone : ''}</div><div class="list-item-sub" style="margin-top: 8px;">Registered: ${formatDate(u.created_at)}</div><div style="display: flex; gap: 8px; margin-top: 12px;"><button class="btn btn-success btn-sm" onclick="approveUser(${u.id})" style="flex: 1;">✅ Approve</button><button class="btn btn-danger btn-sm" onclick="rejectUser(${u.id})" style="flex: 1;">❌ Reject</button></div></div>`).join('');
+                }
+            } catch (e) { console.error(e); }
+        }
+        
+        async function approveUser(id) {
+            try {
+                await fetchAPI('/api/auth/approve/' + id, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ approver_name: currentUser.name }) });
+                showToast('User approved!');
+                loadPending();
+            } catch (e) { alert('Error approving user'); }
+        }
+        
+        async function rejectUser(id) {
+            showConfirm('Are you sure you want to reject this registration?', async () => {
+                try {
+                    await fetchAPI('/api/auth/reject/' + id, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ approver_name: currentUser.name }) });
+                    showToast('User rejected!');
+                    loadPending();
+                } catch (e) { alert('Error rejecting user'); }
+            });
+        }
         
         let allAuditLogs = [];
         

@@ -4,6 +4,12 @@ const multer = require('multer');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
+
+// Simple hash function for passwords
+function hashPassword(password) {
+    return crypto.createHash('sha256').update(password).digest('hex');
+}
 
 const app = express();
 const PORT = 3000;
@@ -47,9 +53,11 @@ db.exec(`
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
-        email TEXT,
+        email TEXT UNIQUE,
         phone TEXT,
+        password TEXT NOT NULL,
         role TEXT NOT NULL DEFAULT 'user',
+        status TEXT NOT NULL DEFAULT 'pending',
         division_id INTEGER,
         avatar TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -125,28 +133,31 @@ if (divisionCount === 0) {
     db.prepare('INSERT INTO divisions (name) VALUES (?)').run('Stage Design');
     db.prepare('INSERT INTO divisions (name) VALUES (?)').run('Audio Visual');
     
-    // Users - Admin
-    db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('Admin User', 'admin@pvprod.com', '+6281234567890', 'admin', null);
+    // Default password for all users: "pvprod123"
+    const defaultPass = hashPassword('pvprod123');
     
-    // Users - Head
-    db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('Head User', 'head@pvprod.com', '+6281234567891', 'head', null);
-    db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('Sarah Johnson', 'sarah.j@pvprod.com', '+6281234567891', 'head', 1);
-    db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('Michael Chen', 'michael.c@pvprod.com', '+6281234567892', 'head', 2);
+    // Users - Admin (approved, password: pvprod123)
+    db.prepare('INSERT INTO users (name, email, phone, password, role, status, division_id) VALUES (?, ?, ?, ?, ?, ?, ?)').run('Admin User', 'admin@pvprod.com', '+6281234567890', defaultPass, 'admin', 'approved', null);
     
-    // Users - Manager
-    db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('Manager A', 'manager@pvprod.com', '+6281234567893', 'manager', 1);
-    db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('Budi Santoso', 'budi.s@pvprod.com', '+6281234567894', 'manager', 1);
-    db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('Diana Putri', 'diana.p@pvprod.com', '+6281234567895', 'manager', 2);
-    db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('Ahmad Rizki', 'ahmad.r@pvprod.com', '+6281234567896', 'manager', 3);
+    // Users - Head (approved)
+    db.prepare('INSERT INTO users (name, email, phone, password, role, status, division_id) VALUES (?, ?, ?, ?, ?, ?, ?)').run('Head User', 'head@pvprod.com', '+6281234567891', defaultPass, 'head', 'approved', null);
+    db.prepare('INSERT INTO users (name, email, phone, password, role, status, division_id) VALUES (?, ?, ?, ?, ?, ?, ?)').run('Sarah Johnson', 'sarah.j@pvprod.com', '+6281234567891', defaultPass, 'head', 'approved', 1);
+    db.prepare('INSERT INTO users (name, email, phone, password, role, status, division_id) VALUES (?, ?, ?, ?, ?, ?, ?)').run('Michael Chen', 'michael.c@pvprod.com', '+6281234567892', defaultPass, 'head', 'approved', 2);
     
-    // Users - Regular
-    db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('User B', 'user@pvprod.com', '+6281234567897', 'user', 1);
-    db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('Rina Wijaya', 'rina.w@pvprod.com', '+6281234567898', 'user', 1);
-    db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('Dedi Kurniawan', 'dedi.k@pvprod.com', '+6281234567899', 'user', 2);
-    db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('Fitri Handayani', 'fitri.h@pvprod.com', '+6281234567900', 'user', 2);
-    db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('Andi Prasetyo', 'andi.p@pvprod.com', '+6281234567901', 'user', 3);
-    db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('Lisa Monica', 'lisa.m@pvprod.com', '+6281234567902', 'user', 4);
-    db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('Hendra Wijaya', 'hendra.w@pvprod.com', '+6281234567903', 'user', 5);
+    // Users - Manager (approved)
+    db.prepare('INSERT INTO users (name, email, phone, password, role, status, division_id) VALUES (?, ?, ?, ?, ?, ?, ?)').run('Manager A', 'manager@pvprod.com', '+6281234567893', defaultPass, 'manager', 'approved', 1);
+    db.prepare('INSERT INTO users (name, email, phone, password, role, status, division_id) VALUES (?, ?, ?, ?, ?, ?, ?)').run('Budi Santoso', 'budi.s@pvprod.com', '+6281234567894', defaultPass, 'manager', 'approved', 1);
+    db.prepare('INSERT INTO users (name, email, phone, password, role, status, division_id) VALUES (?, ?, ?, ?, ?, ?, ?)').run('Diana Putri', 'diana.p@pvprod.com', '+6281234567895', defaultPass, 'manager', 'approved', 2);
+    db.prepare('INSERT INTO users (name, email, phone, password, role, status, division_id) VALUES (?, ?, ?, ?, ?, ?, ?)').run('Ahmad Rizki', 'ahmad.r@pvprod.com', '+6281234567896', defaultPass, 'manager', 'approved', 3);
+    
+    // Users - Regular (approved)
+    db.prepare('INSERT INTO users (name, email, phone, password, role, status, division_id) VALUES (?, ?, ?, ?, ?, ?, ?)').run('User B', 'user@pvprod.com', '+6281234567897', defaultPass, 'user', 'approved', 1);
+    db.prepare('INSERT INTO users (name, email, phone, password, role, status, division_id) VALUES (?, ?, ?, ?, ?, ?, ?)').run('Rina Wijaya', 'rina.w@pvprod.com', '+6281234567898', defaultPass, 'user', 'approved', 1);
+    db.prepare('INSERT INTO users (name, email, phone, password, role, status, division_id) VALUES (?, ?, ?, ?, ?, ?, ?)').run('Dedi Kurniawan', 'dedi.k@pvprod.com', '+6281234567899', defaultPass, 'user', 'approved', 2);
+    db.prepare('INSERT INTO users (name, email, phone, password, role, status, division_id) VALUES (?, ?, ?, ?, ?, ?, ?)').run('Fitri Handayani', 'fitri.h@pvprod.com', '+6281234567900', defaultPass, 'user', 'approved', 2);
+    db.prepare('INSERT INTO users (name, email, phone, password, role, status, division_id) VALUES (?, ?, ?, ?, ?, ?, ?)').run('Andi Prasetyo', 'andi.p@pvprod.com', '+6281234567901', defaultPass, 'user', 'approved', 3);
+    db.prepare('INSERT INTO users (name, email, phone, password, role, status, division_id) VALUES (?, ?, ?, ?, ?, ?, ?)').run('Lisa Monica', 'lisa.m@pvprod.com', '+6281234567902', defaultPass, 'user', 'approved', 4);
+    db.prepare('INSERT INTO users (name, email, phone, password, role, status, division_id) VALUES (?, ?, ?, ?, ?, ?, ?)').run('Hendra Wijaya', 'hendra.w@pvprod.com', '+6281234567903', defaultPass, 'user', 'approved', 5);
     
     // Insert sample projects
     const project1 = db.prepare('INSERT INTO projects (name, client, division_id, start_date, status, created_by) VALUES (?, ?, ?, ?, ?, ?)').run('Jakarta Expo 2026', 'PT Jakarta Expo Center', 1, '2026-02-15', 'pre-loading', 1);
@@ -544,6 +555,120 @@ function logAudit(userId, userName, action, entityType, entityName, details) {
         console.error('Audit log error:', error.message);
     }
 }
+
+// ============ AUTH ROUTES ============
+
+// Login
+app.post('/api/auth/login', (req, res) => {
+    try {
+        const { email, password } = req.body;
+        
+        if (!email || !password) {
+            return res.status(400).json({ error: 'Email and password are required' });
+        }
+        
+        const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+        
+        if (!user) {
+            return res.status(401).json({ error: 'Invalid email or password' });
+        }
+        
+        const hashedPassword = hashPassword(password);
+        
+        if (user.password !== hashedPassword) {
+            return res.status(401).json({ error: 'Invalid email or password' });
+        }
+        
+        if (user.status !== 'approved') {
+            return res.status(403).json({ error: 'Your account is pending approval. Please wait for admin/manager to approve.' });
+        }
+        
+        // Don't send password back
+        delete user.password;
+        res.json(user);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Register
+app.post('/api/auth/register', (req, res) => {
+    try {
+        const { name, email, phone, password } = req.body;
+        
+        if (!name || !email || !password) {
+            return res.status(400).json({ error: 'Name, email, and password are required' });
+        }
+        
+        // Check if email already exists
+        const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+        if (existing) {
+            return res.status(400).json({ error: 'Email already registered' });
+        }
+        
+        const hashedPassword = hashPassword(password);
+        const result = db.prepare(`
+            INSERT INTO users (name, email, phone, password, role, status) 
+            VALUES (?, ?, ?, ?, 'user', 'pending')
+        `).run(name, email, phone || '', hashedPassword);
+        
+        res.json({ 
+            id: result.lastInsertRowid, 
+            message: 'Registration successful! Please wait for admin/manager approval.' 
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get pending registrations (for Admin/Manager)
+app.get('/api/auth/pending', (req, res) => {
+    try {
+        const users = db.prepare(`
+            SELECT u.*, d.name as division_name 
+            FROM users u 
+            LEFT JOIN divisions d ON u.division_id = d.id 
+            WHERE u.status = 'pending'
+            ORDER BY u.created_at DESC
+        `).all();
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Approve user
+app.post('/api/auth/approve/:id', (req, res) => {
+    try {
+        db.prepare('UPDATE users SET status = ? WHERE id = ?').run('approved', req.params.id);
+        logAudit(null, req.body.approver_name || 'System', 'APPROVE', 'User', 'User ID: ' + req.params.id, 'User approved');
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Reject user
+app.post('/api/auth/reject/:id', (req, res) => {
+    try {
+        db.prepare('DELETE FROM users WHERE id = ? AND status = ?').run(req.params.id, 'pending');
+        logAudit(null, req.body.approver_name || 'System', 'REJECT', 'User', 'User ID: ' + req.params.id, 'User registration rejected');
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Update user status
+app.put('/api/users/:id/status', (req, res) => {
+    try {
+        const { status } = req.body;
+        db.prepare('UPDATE users SET status = ? WHERE id = ?').run(status, req.params.id);
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
 
 // Stats
 app.get('/api/stats', (req, res) => {
