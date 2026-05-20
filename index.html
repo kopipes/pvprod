@@ -1024,10 +1024,11 @@
                 <div style="margin-top: 20px; text-align: center;">
                     <span style="font-size: 13px; color: white; opacity: 0.8;" id="photoViewDate"></span>
                     <p id="photoViewNote" style="font-size: 14px; color: white; margin-top: 8px;"></p>
-                    <div style="margin-top: 16px; display: flex; justify-content: center; gap: 12px;">
-                        <button class="btn btn-sm" onclick="editPhoto()" style="background: rgba(59, 130, 246, 0.9); color: white; padding: 10px 20px; border-radius: 12px; font-size: 14px; font-weight: 600; border: none; cursor: pointer;">✏️ Edit</button>
-                        <button class="btn btn-sm" onclick="deletePhoto()" style="background: rgba(239, 68, 68, 0.9); color: white; padding: 10px 20px; border-radius: 12px; font-size: 14px; font-weight: 600; border: none; cursor: pointer;">🗑️ Delete</button>
-                    </div>
+                <div style="margin-top: 16px; display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
+                    <button class="btn btn-sm" onclick="addMorePhotos()" style="background: rgba(16, 185, 129, 0.9); color: white; padding: 10px 20px; border-radius: 12px; font-size: 14px; font-weight: 600; border: none; cursor: pointer;">➕ Add More</button>
+                    <button class="btn btn-sm" onclick="editPhoto()" style="background: rgba(59, 130, 246, 0.9); color: white; padding: 10px 20px; border-radius: 12px; font-size: 14px; font-weight: 600; border: none; cursor: pointer;">✏️ Edit</button>
+                    <button class="btn btn-sm" onclick="deletePhoto()" style="background: rgba(239, 68, 68, 0.9); color: white; padding: 10px 20px; border-radius: 12px; font-size: 14px; font-weight: 600; border: none; cursor: pointer;">🗑️ Delete</button>
+                </div>
                 </div>
             </div>
         </div>
@@ -1534,6 +1535,12 @@
                 document.getElementById('photoViewNote').textContent = photo.note || 'No note';
                 showModal('photoViewModal');
             }
+        }
+        
+        function addMorePhotos() {
+            if (!currentPhoto) return;
+            hideModal('photoViewModal');
+            showUpload(currentPhoto.type);
         }
         
         function editPhoto() {
