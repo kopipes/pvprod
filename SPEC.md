@@ -41,6 +41,28 @@
 - CSS Grid/Flexbox for responsive layout
 - Mobile-first design with touch optimization
 
+## Deployment Rules (SOT - Source of Truth)
+
+### GOLDEN RULES
+1. **App Code** → GitHub (source of truth for application code)
+2. **Database** → VPS (source of truth for all data)
+3. **DB Structure Changes** → Backup before updating to enable rollback
+4. **Deployment** → Do NOT bother or disrupt existing applications and services
+
+### Deployment Checklist
+- Always exclude `*.db` files when creating deployment tarballs
+- Never overwrite VPS database with local development database
+- Always backup database before structural changes
+- Check for port conflicts before starting new services
+- Verify existing services are unaffected after deployment
+
+### Port Assignment (VPS)
+- Port 3001: PVPROC main app
+- Port 3006: Prompt app
+- Port 3002: (reserved)
+- Port 3003: Budget app
+- Port 3005: PMPV app
+
 ## Data Model
 
 ```
