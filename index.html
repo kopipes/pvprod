@@ -923,12 +923,11 @@
                 <div class="form-group"><label>Start Date</label><input type="date" class="form-control" id="editProjectStartDate"></div>
                 <div class="form-group"><label>End Date</label><input type="date" class="form-control" id="editProjectEndDate"></div>
                 <div class="form-group"><label>Project Members</label><div id="projectMembersList" style="max-height: 150px; overflow-y: auto; border: 2px solid var(--border); border-radius: 14px; padding: 12px;"></div></div>
-                <div id="addMemberSection" class="hidden" style="margin-top: 12px;">
-                    <div style="display: flex; gap: 8px;">
-                        <select class="form-control" id="addMemberSelect" style="flex: 1;"></select>
-                        <button class="btn btn-secondary btn-sm" onclick="addProjectMember()">Add</button>
-                    </div>
-                </div>
+            <div id="addMemberSection" class="hidden" style="margin-top: 12px;">
+                <div class="form-group" style="margin-bottom: 12px;"><label>Search User</label><input type="text" id="memberSearchInput" class="form-control" placeholder="Type to search..." oninput="filterMemberOptions()"></div>
+                <div id="memberOptionsList" style="max-height: 200px; overflow-y: auto; border: 2px solid var(--border); border-radius: 14px; padding: 12px;"></div>
+                <button class="btn btn-secondary btn-block mt-3" onclick="addProjectMember()">Add Selected</button>
+            </div>
             </div>
             <div class="form-group"><label>Project Status</label><select class="form-control" id="editProjectStatus"><option value="pre-loading">Pre-Loading</option><option value="loading-in">Loading In</option><option value="loading-out">Loading Out</option><option value="completed">Completed</option></select></div>
             <button class="btn btn-primary btn-block" onclick="saveProjectEdit()">Save Changes</button>
@@ -1269,10 +1268,10 @@
                     renderProjectMembers(members);
                     document.getElementById('addMemberSection').classList.remove('hidden');
                     const allUsers = await fetchAPI('/api/users');
-                    const memberSelect = document.getElementById('addMemberSelect');
                     const memberIds = members.map(m => m.id);
-                    memberSelect.innerHTML = '<option value="">-- Select User --</option>';
-                    allUsers.filter(u => !memberIds.includes(u.id)).forEach(u => { memberSelect.innerHTML += `<option value="${u.id}">${u.name} (${u.role})</option>`; });
+                    availableMembers = allUsers.filter(u => !memberIds.includes(u.id));
+                    document.getElementById('memberSearchInput').value = '';
+                    filterMemberOptions();
                 }
                 
                 document.getElementById('editProjectStatus').value = project.status || 'pre-loading';
@@ -1291,13 +1290,16 @@
         }
         
         async function addProjectMember() {
-            const userId = document.getElementById('addMemberSelect').value;
-            if (!userId) { alert('Please select a user'); return; }
+            if (!selectedMemberId) { alert('Please select a user'); return; }
             try {
-                await fetchAPI('/api/projects/' + currentProject.id + '/members', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: userId }) });
+                await fetchAPI('/api/projects/' + currentProject.id + '/members', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: selectedMemberId }) });
                 showToast('Member added!');
+                selectedMemberId = null;
                 const members = await fetchAPI('/api/projects/' + currentProject.id + '/members');
                 renderProjectMembers(members);
+                availableMembers = availableMembers.filter(m => !members.some(mem => mem.id === m.id));
+                document.getElementById('memberSearchInput').value = '';
+                filterMemberOptions();
             } catch (e) { alert('Error adding member'); }
         }
         
@@ -1386,6 +1388,39 @@
         let currentPhoto = null;
         let currentChecklistItem = null;
         let currentChecklistType = null;
+        let availableMembers = [];
+        let selectedMemberId = null;
+        
+        function filterMemberOptions() {
+            const search = document.getElementById('memberSearchInput').value.toLowerCase();
+            const container = document.getElementById('memberOptionsList');
+            const filtered = availableMembers.filter(u => u.name.toLowerCase().includes(search) || (u.email && u.email.toLowerCase().includes(search)));
+            if (filtered.length === 0) {
+                container.innerHTML = '<div style="color: var(--text-secondary); font-size: 13px;">No users found</div>';
+            } else {
+                container.innerHTML = filtered.map(u => `<div class="member-option" data-id="${u.id}" onclick="selectMember(${u.id})" style="padding: 12px; border-radius: 10px; cursor: pointer; margin-bottom: 8px; background: var(--bg); border: 2px solid var(--border); transition: all 0.2s;"><strong>${u.name}</strong> <span class="role-badge role-${u.role}">${u.role}</span></div>`).join('');
+            }
+        }
+        
+        function selectMember(id) {
+            selectedMemberId = id;
+            document.querySelectorAll('.member-option').forEach(el => el.style.borderColor = 'var(--border)');
+            document.querySelector(`.member-option[data-id="${id}"]`).style.borderColor = 'var(--secondary)';
+        }
+        
+        async function addProjectMember() {
+            if (!selectedMemberId) { alert('Please select a user'); return; }
+            try {
+                await fetchAPI('/api/projects/' + currentProject.id + '/members', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id: selectedMemberId }) });
+                showToast('Member added!');
+                selectedMemberId = null;
+                const members = await fetchAPI('/api/projects/' + currentProject.id + '/members');
+                renderProjectMembers(members);
+                availableMembers = availableMembers.filter(m => !members.some(mem => mem.id === m.id));
+                document.getElementById('memberSearchInput').value = '';
+                filterMemberOptions();
+            } catch (e) { alert('Error adding member'); }
+        }
         
         function editChecklistItem(itemId, type) {
             const item = currentProject.checklist.find(i => i.id == itemId);
