@@ -374,7 +374,7 @@ app.put('/api/projects/:id/status', (req, res) => {
 // Photos Upload
 app.post('/api/projects/:id/photos', upload.array('files', 20), (req, res) => {
     try {
-        const { type, note } = req.body;
+        const { type, note, user_name } = req.body;
         const photos = [];
         
         req.files.forEach(file => {
@@ -394,6 +394,7 @@ app.post('/api/projects/:id/photos', upload.array('files', 20), (req, res) => {
             });
         });
         
+        if (user_name) logAudit(null, user_name, 'CREATE', 'Photo', `${photos.length} ${type} photo(s)`, `Uploaded ${photos.length} photo(s) for ${type}`);
         res.json(photos);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -402,8 +403,15 @@ app.post('/api/projects/:id/photos', upload.array('files', 20), (req, res) => {
 
 app.put('/api/photos/:id', (req, res) => {
     try {
-        const { note, filename } = req.body;
+        const { note, filename, user_name } = req.body;
+        const old = db.prepare('SELECT * FROM photos WHERE id = ?').get(req.params.id);
         db.prepare('UPDATE photos SET note = ?, filename = ? WHERE id = ?').run(note || '', filename || '', req.params.id);
+        if (user_name && old) {
+            const changes = [];
+            if (old.note !== note) changes.push(`note: "${old.note || ''}" → "${note || ''}"`);
+            if (old.filename !== filename) changes.push(`filename: "${old.filename}" → "${filename}"`);
+            logAudit(null, user_name, 'UPDATE', 'Photo', old.filename, changes.join(', ') || 'No changes detected');
+        }
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -412,11 +420,13 @@ app.put('/api/photos/:id', (req, res) => {
 
 app.delete('/api/photos/:id', (req, res) => {
     try {
-        const photo = db.prepare('SELECT filepath FROM photos WHERE id = ?').get(req.params.id);
+        const { user_name } = req.body;
+        const photo = db.prepare('SELECT * FROM photos WHERE id = ?').get(req.params.id);
         if (photo) {
             const filepath = path.join(uploadsDir, photo.filepath.replace('/uploads/', ''));
             if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
             db.prepare('DELETE FROM photos WHERE id = ?').run(req.params.id);
+            if (user_name) logAudit(null, user_name, 'DELETE', 'Photo', photo.filename, `Deleted ${photo.type} photo`);
         }
         res.json({ success: true });
     } catch (error) {
@@ -427,11 +437,12 @@ app.delete('/api/photos/:id', (req, res) => {
 // Checklist Items
 app.post('/api/projects/:id/checklist', (req, res) => {
     try {
-        const { type, text } = req.body;
+        const { type, text, user_name } = req.body;
         const result = db.prepare(`
             INSERT INTO checklist_items (project_id, type, text)
             VALUES (?, ?, ?)
         `).run(req.params.id, type, text);
+        if (user_name) logAudit(null, user_name, 'CREATE', 'Checklist', text.substring(0, 50), `Added "${text}" to ${type}`);
         res.json({ id: result.lastInsertRowid, project_id: parseInt(req.params.id), type, text, checked: 0 });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -440,11 +451,20 @@ app.post('/api/projects/:id/checklist', (req, res) => {
 
 app.put('/api/checklist/:id', (req, res) => {
     try {
-        const { checked, text } = req.body;
+        const { checked, text, user_name } = req.body;
+        const old = db.prepare('SELECT * FROM checklist_items WHERE id = ?').get(req.params.id);
+        
         if (text) {
             db.prepare('UPDATE checklist_items SET checked = ?, text = ? WHERE id = ?').run(checked ? 1 : 0, text, req.params.id);
         } else {
             db.prepare('UPDATE checklist_items SET checked = ? WHERE id = ?').run(checked ? 1 : 0, req.params.id);
+        }
+        
+        if (user_name && old) {
+            const changes = [];
+            if (old.text !== text) changes.push(`text: "${old.text}" → "${text}"`);
+            if (old.checked !== (checked ? 1 : 0)) changes.push(`checked: ${old.checked ? '✓' : '✗'} → ${checked ? '✓' : '✗'}`);
+            logAudit(null, user_name, 'UPDATE', 'Checklist', old.text.substring(0, 50), changes.join(', ') || 'No changes detected');
         }
         res.json({ success: true });
     } catch (error) {
@@ -454,7 +474,10 @@ app.put('/api/checklist/:id', (req, res) => {
 
 app.delete('/api/checklist/:id', (req, res) => {
     try {
+        const { user_name } = req.body;
+        const item = db.prepare('SELECT * FROM checklist_items WHERE id = ?').get(req.params.id);
         db.prepare('DELETE FROM checklist_items WHERE id = ?').run(req.params.id);
+        if (user_name && item) logAudit(null, user_name, 'DELETE', 'Checklist', item.text.substring(0, 50), `Deleted from ${item.type}`);
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: error.message });
