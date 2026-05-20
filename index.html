@@ -787,6 +787,7 @@
                 <div id="divisionsList"></div>
             </div>
             <div id="usersTab" class="hidden">
+                <div class="form-group" style="margin-bottom: 12px;"><input type="text" class="form-control" id="userSearchInput" placeholder="Search users..." oninput="filterUsers()"></div>
                 <button class="btn btn-secondary btn-block mb-2" onclick="showModal('userModal')">+ Add User</button>
                 <div id="usersList"></div>
             </div>
@@ -1171,13 +1172,32 @@
         }
         
         let editingUserId = null;
+        let allUsers = [];
         
         async function loadUsers() {
             try {
-                const users = await fetchAPI('/api/users');
-                const container = document.getElementById('usersList');
-                container.innerHTML = users.map(u => `<div class="list-item"><div class="list-item-title">${u.name}</div><div class="list-item-sub">${u.email || ''} ${u.phone ? '• ' + u.phone : ''}</div><span class="role-badge role-${u.role}">${u.role}</span>${currentUser.role === 'admin' ? `<div style="display: flex; gap: 8px; margin-top: 12px;"><button class="btn btn-outline btn-sm" onclick="showEditUser(${u.id})" style="flex: 1;">✏️ Edit</button><button class="btn btn-outline btn-sm" onclick="deleteUser(${u.id})" style="color: var(--error);">Delete</button></div>` : ''}</div>`).join('');
+                allUsers = await fetchAPI('/api/users');
+                renderUsers(allUsers);
             } catch (e) { console.error(e); }
+        }
+        
+        function renderUsers(users) {
+            const container = document.getElementById('usersList');
+            if (users.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>No users found</p></div>';
+            } else {
+                container.innerHTML = users.map(u => `<div class="list-item"><div class="list-item-title">${u.name}</div><div class="list-item-sub">${u.email || ''} ${u.phone ? '• ' + u.phone : ''}</div><span class="role-badge role-${u.role}">${u.role}</span>${currentUser.role === 'admin' ? `<div style="display: flex; gap: 8px; margin-top: 12px;"><button class="btn btn-outline btn-sm" onclick="showEditUser(${u.id})" style="flex: 1;">✏️ Edit</button><button class="btn btn-outline btn-sm" onclick="deleteUser(${u.id})" style="color: var(--error);">Delete</button></div>` : ''}</div>`).join('');
+            }
+        }
+        
+        function filterUsers() {
+            const search = document.getElementById('userSearchInput').value.toLowerCase();
+            const filtered = allUsers.filter(u => 
+                u.name.toLowerCase().includes(search) || 
+                (u.email && u.email.toLowerCase().includes(search)) ||
+                (u.phone && u.phone.includes(search))
+            );
+            renderUsers(filtered);
         }
         
         async function showEditUser(id) {
