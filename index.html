@@ -793,6 +793,7 @@
                 <div id="usersList"></div>
             </div>
             <div id="auditTab" class="hidden">
+                <div class="form-group" style="margin-bottom: 12px;"><input type="text" class="form-control" id="auditSearchInput" placeholder="Search audit logs..." oninput="filterAudit()"></div>
                 <div id="auditList"></div>
             </div>
         </section>
@@ -1770,17 +1771,35 @@
             });
         });
         
+        let allAuditLogs = [];
+        
         async function loadAudit() {
             try {
-                const logs = await fetchAPI('/api/audit');
-                const container = document.getElementById('auditList');
-                if (logs.length === 0) {
-                    container.innerHTML = '<div class="empty-state"><p>No audit logs yet</p></div>';
-                } else {
-                    const actionColors = { CREATE: '#10b981', UPDATE: '#3b82f6', DELETE: '#ef4444' };
-                    container.innerHTML = logs.map(log => `<div class="list-item" style="border-left: 4px solid ${actionColors[log.action] || '#64748b'}"><div class="list-item-title">${log.user_name || 'System'}</div><div class="list-item-sub"><span style="font-weight: 600; color: ${actionColors[log.action]}">${log.action}</span> ${log.entity_type}: <strong>${log.entity_name || '-'}</strong></div><div class="list-item-sub" style="margin-top: 8px;">${log.details || ''}</div><div class="list-item-sub" style="opacity: 0.6; font-size: 11px; margin-top: 4px;">${formatDate(log.created_at)}</div></div>`).join('');
-                }
+                allAuditLogs = await fetchAPI('/api/audit');
+                renderAudit(allAuditLogs);
             } catch (e) { console.error(e); }
+        }
+        
+        function renderAudit(logs) {
+            const container = document.getElementById('auditList');
+            if (logs.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>No audit logs found</p></div>';
+            } else {
+                const actionColors = { CREATE: '#10b981', UPDATE: '#3b82f6', DELETE: '#ef4444' };
+                container.innerHTML = logs.map(log => `<div class="list-item" style="border-left: 4px solid ${actionColors[log.action] || '#64748b'}"><div class="list-item-title">${log.user_name || 'System'}</div><div class="list-item-sub"><span style="font-weight: 600; color: ${actionColors[log.action]}">${log.action}</span> ${log.entity_type}: <strong>${log.entity_name || '-'}</strong></div><div class="list-item-sub" style="margin-top: 8px;">${log.details || ''}</div><div class="list-item-sub" style="opacity: 0.6; font-size: 11px; margin-top: 4px;">${formatDate(log.created_at)}</div></div>`).join('');
+            }
+        }
+        
+        function filterAudit() {
+            const search = document.getElementById('auditSearchInput').value.toLowerCase();
+            const filtered = allAuditLogs.filter(log => 
+                (log.user_name && log.user_name.toLowerCase().includes(search)) ||
+                (log.action && log.action.toLowerCase().includes(search)) ||
+                (log.entity_type && log.entity_type.toLowerCase().includes(search)) ||
+                (log.entity_name && log.entity_name.toLowerCase().includes(search)) ||
+                (log.details && log.details.toLowerCase().includes(search))
+            );
+            renderAudit(filtered);
         }
         
         function showModal(id) { document.getElementById(id).classList.add('active'); }
