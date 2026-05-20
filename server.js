@@ -118,14 +118,35 @@ db.exec(`
 // Insert default data
 const divisionCount = db.prepare('SELECT COUNT(*) as count FROM divisions').get().count;
 if (divisionCount === 0) {
+    // Divisions
     db.prepare('INSERT INTO divisions (name) VALUES (?)').run('Exhibition');
     db.prepare('INSERT INTO divisions (name) VALUES (?)').run('Event');
     db.prepare('INSERT INTO divisions (name) VALUES (?)').run('Installation');
+    db.prepare('INSERT INTO divisions (name) VALUES (?)').run('Stage Design');
+    db.prepare('INSERT INTO divisions (name) VALUES (?)').run('Audio Visual');
     
+    // Users - Admin
     db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('Admin User', 'admin@pvprod.com', '+6281234567890', 'admin', null);
+    
+    // Users - Head
     db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('Head User', 'head@pvprod.com', '+6281234567891', 'head', null);
-    db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('Manager A', 'manager@pvprod.com', '+6281234567892', 'manager', 1);
-    db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('User B', 'user@pvprod.com', '+6281234567893', 'user', 1);
+    db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('Sarah Johnson', 'sarah.j@pvprod.com', '+6281234567891', 'head', 1);
+    db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('Michael Chen', 'michael.c@pvprod.com', '+6281234567892', 'head', 2);
+    
+    // Users - Manager
+    db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('Manager A', 'manager@pvprod.com', '+6281234567893', 'manager', 1);
+    db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('Budi Santoso', 'budi.s@pvprod.com', '+6281234567894', 'manager', 1);
+    db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('Diana Putri', 'diana.p@pvprod.com', '+6281234567895', 'manager', 2);
+    db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('Ahmad Rizki', 'ahmad.r@pvprod.com', '+6281234567896', 'manager', 3);
+    
+    // Users - Regular
+    db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('User B', 'user@pvprod.com', '+6281234567897', 'user', 1);
+    db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('Rina Wijaya', 'rina.w@pvprod.com', '+6281234567898', 'user', 1);
+    db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('Dedi Kurniawan', 'dedi.k@pvprod.com', '+6281234567899', 'user', 2);
+    db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('Fitri Handayani', 'fitri.h@pvprod.com', '+6281234567900', 'user', 2);
+    db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('Andi Prasetyo', 'andi.p@pvprod.com', '+6281234567901', 'user', 3);
+    db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('Lisa Monica', 'lisa.m@pvprod.com', '+6281234567902', 'user', 4);
+    db.prepare('INSERT INTO users (name, email, phone, role, division_id) VALUES (?, ?, ?, ?, ?)').run('Hendra Wijaya', 'hendra.w@pvprod.com', '+6281234567903', 'user', 5);
     
     // Insert sample projects
     const project1 = db.prepare('INSERT INTO projects (name, client, division_id, start_date, status, created_by) VALUES (?, ?, ?, ?, ?, ?)').run('Jakarta Expo 2026', 'PT Jakarta Expo Center', 1, '2026-02-15', 'pre-loading', 1);
