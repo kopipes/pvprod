@@ -1036,10 +1036,12 @@
         </div>
     </div>
     
-    <div class="modal-overlay" id="photoViewModal" onclick="if(event.target.id==='photoViewModal')hideModal('photoViewModal')">
+    <div class="modal-overlay" id="photoViewModal" onclick="if(event.target.id==='photoViewModal' || event.target.id==='photoViewClose')hideModal('photoViewModal')">
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; padding: 60px 20px;">
             <div style="position: relative; max-width: 100%; text-align: center;">
-                <button class="modal-close" onclick="hideModal('photoViewModal')" style="position: absolute; top: -50px; right: 0; z-index: 10;">×</button>
+                <button class="modal-close" id="photoViewClose" onclick="hideModal('photoViewModal')" style="position: absolute; top: -50px; right: 0; z-index: 10;">×</button>
+                <button onclick="prevPhoto()" id="photoNavPrev" style="position: absolute; left: -60px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; width: 50px; height: 50px; border-radius: 50%; font-size: 24px; cursor: pointer; z-index: 10;">←</button>
+                <button onclick="nextPhoto()" id="photoNavNext" style="position: absolute; right: -60px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; width: 50px; height: 50px; border-radius: 50%; font-size: 24px; cursor: pointer; z-index: 10;">→</button>
                 <img id="photoViewImage" style="max-width: 100%; max-height: 70vh; object-fit: contain; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);" src="">
                 <div style="margin-top: 20px; text-align: center;">
                     <span style="font-size: 13px; color: white; opacity: 0.8;" id="photoViewDate"></span>
@@ -1049,6 +1051,7 @@
                     <button class="btn btn-sm" onclick="editPhoto()" style="background: rgba(59, 130, 246, 0.9); color: white; padding: 10px 20px; border-radius: 12px; font-size: 14px; font-weight: 600; border: none; cursor: pointer;">✏️ Edit</button>
                     <button class="btn btn-sm" onclick="deletePhoto()" style="background: rgba(239, 68, 68, 0.9); color: white; padding: 10px 20px; border-radius: 12px; font-size: 14px; font-weight: 600; border: none; cursor: pointer;">🗑️ Delete</button>
                 </div>
+                <div id="photoNavDots" style="margin-top: 12px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;"></div>
                 </div>
             </div>
         </div>
@@ -1559,10 +1562,78 @@
         }
         
         let currentPhoto = null;
+        let currentPhotoIndex = 0;
+        let currentPhotoList = [];
         let currentChecklistItem = null;
         let currentChecklistType = null;
         let availableMembers = [];
         let selectedMemberId = null;
+        
+        function viewPhoto(photoId) {
+            const photo = currentProject.photos.find(p => p.id == photoId);
+            if (photo) {
+                currentPhoto = photo;
+                currentPhotoList = currentProject.photos;
+                currentPhotoIndex = currentPhotoList.findIndex(p => p.id == photoId);
+                document.getElementById('photoViewImage').src = photo.filepath;
+                document.getElementById('photoViewDate').textContent = formatDate(photo.created_at);
+                document.getElementById('photoViewNote').textContent = photo.note || 'No note';
+                updatePhotoNavButtons();
+                showModal('photoViewModal');
+            }
+        }
+        
+        function updatePhotoNavButtons() {
+            const prevBtn = document.getElementById('photoNavPrev');
+            const nextBtn = document.getElementById('photoNavNext');
+            const dotsContainer = document.getElementById('photoNavDots');
+            
+            prevBtn.style.display = currentPhotoIndex > 0 ? '' : 'none';
+            nextBtn.style.display = currentPhotoIndex < currentPhotoList.length - 1 ? '' : 'none';
+            
+            // Update dots
+            if (currentPhotoList.length <= 10) {
+                dotsContainer.innerHTML = currentPhotoList.map((p, i) => 
+                    `<span style="width: 10px; height: 10px; border-radius: 50%; background: ${i === currentPhotoIndex ? 'white' : 'rgba(255,255,255,0.3)'}; cursor: pointer;" onclick="jumpToPhoto(${i})"></span>`
+                ).join('');
+            } else {
+                dotsContainer.innerHTML = `<span style="color: white; font-size: 13px;">${currentPhotoIndex + 1} / ${currentPhotoList.length}</span>`;
+            }
+        }
+        
+        function prevPhoto() {
+            if (currentPhotoIndex > 0) {
+                currentPhotoIndex--;
+                const photo = currentPhotoList[currentPhotoIndex];
+                currentPhoto = photo;
+                document.getElementById('photoViewImage').src = photo.filepath;
+                document.getElementById('photoViewDate').textContent = formatDate(photo.created_at);
+                document.getElementById('photoViewNote').textContent = photo.note || 'No note';
+                updatePhotoNavButtons();
+            }
+        }
+        
+        function nextPhoto() {
+            if (currentPhotoIndex < currentPhotoList.length - 1) {
+                currentPhotoIndex++;
+                const photo = currentPhotoList[currentPhotoIndex];
+                currentPhoto = photo;
+                document.getElementById('photoViewImage').src = photo.filepath;
+                document.getElementById('photoViewDate').textContent = formatDate(photo.created_at);
+                document.getElementById('photoViewNote').textContent = photo.note || 'No note';
+                updatePhotoNavButtons();
+            }
+        }
+        
+        function jumpToPhoto(index) {
+            currentPhotoIndex = index;
+            const photo = currentPhotoList[currentPhotoIndex];
+            currentPhoto = photo;
+            document.getElementById('photoViewImage').src = photo.filepath;
+            document.getElementById('photoViewDate').textContent = formatDate(photo.created_at);
+            document.getElementById('photoViewNote').textContent = photo.note || 'No note';
+            updatePhotoNavButtons();
+        }
         
         function filterMemberOptions() {
             const search = document.getElementById('memberSearchInput').value.toLowerCase();
@@ -1626,17 +1697,6 @@
                     viewProject(currentProject.id);
                 } catch (e) { alert('Error deleting item'); }
             });
-        }
-        
-        function viewPhoto(photoId) {
-            const photo = currentProject.photos.find(p => p.id == photoId);
-            if (photo) {
-                currentPhoto = photo;
-                document.getElementById('photoViewImage').src = photo.filepath;
-                document.getElementById('photoViewDate').textContent = formatDate(photo.created_at);
-                document.getElementById('photoViewNote').textContent = photo.note || 'No note';
-                showModal('photoViewModal');
-            }
         }
         
         function addMorePhotos() {
