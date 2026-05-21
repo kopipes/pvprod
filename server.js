@@ -396,51 +396,17 @@ app.put('/api/projects/:id/status', (req, res) => {
     }
 });
 
-// Helper function to convert HEIC to JPEG (cross-platform)
-// Note: On VPS, HEIC conversion tools have issues with multi-stream HEIC files
-// Modern browsers support HEIC natively, so we save as-is and let browser handle it
+// Helper function to convert HEIC to JPEG using ImageMagick
 async function convertHeicToJpeg(inputPath, outputPath) {
-    // Try sips first (macOS) - gives full resolution
-    try {
-        await new Promise((resolve, reject) => {
-            exec(`sips -s format jpeg "${inputPath}" --out "${outputPath}"`, (error) => {
-                if (error) reject(error);
-                else resolve();
-            });
+    return new Promise((resolve, reject) => {
+        exec(`convert "${inputPath}" "${outputPath}"`, (error) => {
+            if (error) reject(error);
+            else resolve();
         });
-        console.log('✓ Converted HEIC with sips (macOS)');
-        return true;
-    } catch (e) {
-        console.log('sips not available, trying sharp...');
-    }
-    
-    // Try sharp (Linux with libheif)
-    try {
-        const sharp = require('sharp');
-        await sharp(inputPath).jpeg({ quality: 90 }).toFile(outputPath);
-        console.log('✓ Converted HEIC with sharp');
-        return true;
-    } catch (e) {
-        console.log('sharp failed:', e.message);
-    }
-    
-    // Last resort: use ffmpeg (may get wrong stream on some HEIC files)
-    try {
-        await new Promise((resolve, reject) => {
-            exec(`ffmpeg -i "${inputPath}" -frames:v 1 "${outputPath}" -y 2>/dev/null`, (error) => {
-                if (error) reject(error);
-                else resolve();
-            });
-        });
-        console.log('✓ Converted HEIC with ffmpeg');
-        return true;
-    } catch (e) {
-        console.log('ffmpeg failed:', e.message);
-        return false;
-    }
+    });
 }
 
-// Photos Upload - Save HEIC as-is (browsers support HEIC natively)
+// Photos Upload - Convert HEIC to JPEG using ImageMagick
 app.post('/api/projects/:id/photos', upload.array('files', 20), async (req, res) => {
     try {
         const { type, note, user_name } = req.body;
@@ -451,14 +417,12 @@ app.post('/api/projects/:id/photos', upload.array('files', 20), async (req, res)
             const isHeic = ['.heic', '.heif', '.avif', '.heics'].includes(ext);
             
             if (isHeic) {
-                // Try to convert HEIC to JPEG
                 const jpegFilename = file.filename.replace(ext, '.jpg');
                 const jpegPath = path.join(uploadsDir, jpegFilename);
                 
-                const converted = await convertHeicToJpeg(file.path, jpegPath);
-                
-                if (converted && fs.existsSync(jpegPath)) {
-                    fs.unlinkSync(file.path); // Remove original HEIC
+                try {
+                    await convertHeicToJpeg(file.path, jpegPath);
+                    fs.unlinkSync(file.path);
                     
                     const result = db.prepare(`
                         INSERT INTO photos (project_id, type, filename, filepath, note)
@@ -474,9 +438,8 @@ app.post('/api/projects/:id/photos', upload.array('files', 20), async (req, res)
                         note: note || '',
                         created_at: new Date().toISOString()
                     });
-                } else {
-                    // Conversion failed - save HEIC as-is (browser handles display)
-                    console.log('⚠ HEIC conversion failed, saving as-is');
+                } catch (err) {
+                    console.error('HEIC conversion failed:', err);
                     const result = db.prepare(`
                         INSERT INTO photos (project_id, type, filename, filepath, note)
                         VALUES (?, ?, ?, ?, ?)
@@ -493,7 +456,6 @@ app.post('/api/projects/:id/photos', upload.array('files', 20), async (req, res)
                     });
                 }
             } else {
-                // Save other files as-is
                 const result = db.prepare(`
                     INSERT INTO photos (project_id, type, filename, filepath, note)
                     VALUES (?, ?, ?, ?, ?)
