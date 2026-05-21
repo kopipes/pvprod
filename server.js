@@ -396,9 +396,11 @@ app.put('/api/projects/:id/status', (req, res) => {
     }
 });
 
-// Helper function to convert HEIC to JPEG
+// Helper function to convert HEIC to JPEG (cross-platform)
+// Note: On VPS, HEIC conversion tools have issues with multi-stream HEIC files
+// Modern browsers support HEIC natively, so we save as-is and let browser handle it
 async function convertHeicToJpeg(inputPath, outputPath) {
-    // Try sips first (macOS native)
+    // Try sips first (macOS) - gives full resolution
     try {
         await new Promise((resolve, reject) => {
             exec(`sips -s format jpeg "${inputPath}" --out "${outputPath}"`, (error) => {
@@ -406,35 +408,39 @@ async function convertHeicToJpeg(inputPath, outputPath) {
                 else resolve();
             });
         });
-        return;
+        console.log('✓ Converted HEIC with sips (macOS)');
+        return true;
     } catch (e) {
-        // sips not available, try sharp (Linux with libvips)
+        console.log('sips not available, trying sharp...');
     }
     
-    // Try sharp (works on Linux with libheif)
+    // Try sharp (Linux with libheif)
     try {
         const sharp = require('sharp');
         await sharp(inputPath).jpeg({ quality: 90 }).toFile(outputPath);
-        return;
+        console.log('✓ Converted HEIC with sharp');
+        return true;
     } catch (e) {
-        // sharp failed
+        console.log('sharp failed:', e.message);
     }
     
-    // Last resort: use ffmpeg if available
+    // Last resort: use ffmpeg (may get wrong stream on some HEIC files)
     try {
         await new Promise((resolve, reject) => {
-            exec(`ffmpeg -i "${inputPath}" -map 0:v:0 -frames:v 1 "${outputPath}" -y`, (error) => {
+            exec(`ffmpeg -i "${inputPath}" -frames:v 1 "${outputPath}" -y 2>/dev/null`, (error) => {
                 if (error) reject(error);
                 else resolve();
             });
         });
-        return;
+        console.log('✓ Converted HEIC with ffmpeg');
+        return true;
     } catch (e) {
-        throw new Error('No HEIC converter available');
+        console.log('ffmpeg failed:', e.message);
+        return false;
     }
 }
 
-// Photos Upload - Convert HEIC to JPEG for compatibility
+// Photos Upload - Save HEIC as-is (browsers support HEIC natively)
 app.post('/api/projects/:id/photos', upload.array('files', 20), async (req, res) => {
     try {
         const { type, note, user_name } = req.body;
@@ -445,12 +451,13 @@ app.post('/api/projects/:id/photos', upload.array('files', 20), async (req, res)
             const isHeic = ['.heic', '.heif', '.avif', '.heics'].includes(ext);
             
             if (isHeic) {
-                // Convert HEIC to JPEG
+                // Try to convert HEIC to JPEG
                 const jpegFilename = file.filename.replace(ext, '.jpg');
                 const jpegPath = path.join(uploadsDir, jpegFilename);
                 
-                try {
-                    await convertHeicToJpeg(file.path, jpegPath);
+                const converted = await convertHeicToJpeg(file.path, jpegPath);
+                
+                if (converted && fs.existsSync(jpegPath)) {
                     fs.unlinkSync(file.path); // Remove original HEIC
                     
                     const result = db.prepare(`
@@ -467,9 +474,9 @@ app.post('/api/projects/:id/photos', upload.array('files', 20), async (req, res)
                         note: note || '',
                         created_at: new Date().toISOString()
                     });
-                } catch (err) {
-                    console.error('HEIC conversion failed:', err);
-                    // Save as-is if conversion fails
+                } else {
+                    // Conversion failed - save HEIC as-is (browser handles display)
+                    console.log('⚠ HEIC conversion failed, saving as-is');
                     const result = db.prepare(`
                         INSERT INTO photos (project_id, type, filename, filepath, note)
                         VALUES (?, ?, ?, ?, ?)
