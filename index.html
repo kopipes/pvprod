@@ -1094,7 +1094,17 @@
         
         function logout() {
             localStorage.removeItem('pvprod_user');
-            location.reload();
+            // Reset UI elements before reload
+            document.getElementById('userBadge').textContent = 'Guest';
+            document.getElementById('welcomeName').textContent = 'Guest';
+            document.getElementById('loginSection').classList.add('active');
+            document.getElementById('dashboardSection').classList.remove('active');
+            document.getElementById('projectsSection').classList.remove('active');
+            document.getElementById('masterSection').classList.remove('active');
+            document.getElementById('settingsSection').classList.remove('active');
+            document.getElementById('projectDetailSection').classList.remove('active');
+            currentUser = null;
+            location.reload(true);
         }
         
         function showRegister() {
