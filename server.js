@@ -396,15 +396,42 @@ app.put('/api/projects/:id/status', (req, res) => {
     }
 });
 
-// Helper function to convert HEIC to JPEG using macOS sips (native support)
-function convertHeicToJpeg(inputPath, outputPath) {
-    return new Promise((resolve, reject) => {
-        // Use macOS native sips tool which properly handles HEIC
-        exec(`sips -s format jpeg "${inputPath}" --out "${outputPath}"`, (error) => {
-            if (error) reject(error);
-            else resolve();
+// Helper function to convert HEIC to JPEG
+async function convertHeicToJpeg(inputPath, outputPath) {
+    // Try sips first (macOS native)
+    try {
+        await new Promise((resolve, reject) => {
+            exec(`sips -s format jpeg "${inputPath}" --out "${outputPath}"`, (error) => {
+                if (error) reject(error);
+                else resolve();
+            });
         });
-    });
+        return;
+    } catch (e) {
+        // sips not available, try sharp (Linux with libvips)
+    }
+    
+    // Try sharp (works on Linux with libheif)
+    try {
+        const sharp = require('sharp');
+        await sharp(inputPath).jpeg({ quality: 90 }).toFile(outputPath);
+        return;
+    } catch (e) {
+        // sharp failed
+    }
+    
+    // Last resort: use ffmpeg if available
+    try {
+        await new Promise((resolve, reject) => {
+            exec(`ffmpeg -i "${inputPath}" -map 0:v:0 -frames:v 1 "${outputPath}" -y`, (error) => {
+                if (error) reject(error);
+                else resolve();
+            });
+        });
+        return;
+    } catch (e) {
+        throw new Error('No HEIC converter available');
+    }
 }
 
 // Photos Upload - Convert HEIC to JPEG for compatibility
