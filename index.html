@@ -996,7 +996,7 @@
             <div class="modal-header"><h3 class="modal-title" id="uploadTitle">Upload Photos</h3><button class="modal-close" onclick="hideModal('uploadModal')">×</button></div>
             <div class="form-group"><label>Batch Title</label><input type="text" class="form-control" id="uploadBatchTitle" placeholder="e.g., Morning Survey, Site Layout, etc."></div>
             <div class="upload-area" onclick="document.getElementById('fileInput').click()"><div class="upload-icon">📷</div><h4>Tap to select photos</h4><p>Single or multiple upload supported</p></div>
-            <input type="file" id="fileInput" multiple accept="image/*" style="display: none;" onchange="handleFiles(this.files)">
+            <input type="file" id="fileInput" multiple accept="image/*,.heic,.heif" style="display: none;" onchange="handleFiles(this.files)">
             <div id="previewFiles" class="photo-grid mt-3"></div>
             <div class="form-group mt-3"><label>Description (optional)</label><textarea class="form-control" id="uploadNote" rows="2" placeholder="Add a description..."></textarea></div>
             <button class="btn btn-primary btn-block" onclick="doUpload()">Upload</button>
