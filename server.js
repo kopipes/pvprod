@@ -1,5 +1,6 @@
 const express = require('express');
 const Database = require('better-sqlite3');
+const { exec } = require('child_process');
 const multer = require('multer');
 const cors = require('cors');
 const path = require('path');
@@ -395,28 +396,86 @@ app.put('/api/projects/:id/status', (req, res) => {
     }
 });
 
-// Photos Upload
-app.post('/api/projects/:id/photos', upload.array('files', 20), (req, res) => {
+// Helper function to convert HEIC to JPEG using macOS sips (native support)
+function convertHeicToJpeg(inputPath, outputPath) {
+    return new Promise((resolve, reject) => {
+        // Use macOS native sips tool which properly handles HEIC
+        exec(`sips -s format jpeg "${inputPath}" --out "${outputPath}"`, (error) => {
+            if (error) reject(error);
+            else resolve();
+        });
+    });
+}
+
+// Photos Upload - Convert HEIC to JPEG for compatibility
+app.post('/api/projects/:id/photos', upload.array('files', 20), async (req, res) => {
     try {
         const { type, note, user_name } = req.body;
         const photos = [];
         
-        req.files.forEach(file => {
-            const result = db.prepare(`
-                INSERT INTO photos (project_id, type, filename, filepath, note)
-                VALUES (?, ?, ?, ?, ?)
-            `).run(req.params.id, type, file.originalname, file.filename, note || '');
+        for (const file of req.files) {
+            const ext = path.extname(file.originalname).toLowerCase();
+            const isHeic = ['.heic', '.heif', '.avif', '.heics'].includes(ext);
             
-            photos.push({
-                id: result.lastInsertRowid,
-                project_id: parseInt(req.params.id),
-                type,
-                filename: file.originalname,
-                filepath: '/uploads/' + file.filename,
-                note: note || '',
-                created_at: new Date().toISOString()
-            });
-        });
+            if (isHeic) {
+                // Convert HEIC to JPEG
+                const jpegFilename = file.filename.replace(ext, '.jpg');
+                const jpegPath = path.join(uploadsDir, jpegFilename);
+                
+                try {
+                    await convertHeicToJpeg(file.path, jpegPath);
+                    fs.unlinkSync(file.path); // Remove original HEIC
+                    
+                    const result = db.prepare(`
+                        INSERT INTO photos (project_id, type, filename, filepath, note)
+                        VALUES (?, ?, ?, ?, ?)
+                    `).run(req.params.id, type, file.originalname, jpegFilename, note || '');
+                    
+                    photos.push({
+                        id: result.lastInsertRowid,
+                        project_id: parseInt(req.params.id),
+                        type,
+                        filename: file.originalname,
+                        filepath: '/uploads/' + jpegFilename,
+                        note: note || '',
+                        created_at: new Date().toISOString()
+                    });
+                } catch (err) {
+                    console.error('HEIC conversion failed:', err);
+                    // Save as-is if conversion fails
+                    const result = db.prepare(`
+                        INSERT INTO photos (project_id, type, filename, filepath, note)
+                        VALUES (?, ?, ?, ?, ?)
+                    `).run(req.params.id, type, file.originalname, file.filename, note || '');
+                    
+                    photos.push({
+                        id: result.lastInsertRowid,
+                        project_id: parseInt(req.params.id),
+                        type,
+                        filename: file.originalname,
+                        filepath: '/uploads/' + file.filename,
+                        note: note || '',
+                        created_at: new Date().toISOString()
+                    });
+                }
+            } else {
+                // Save other files as-is
+                const result = db.prepare(`
+                    INSERT INTO photos (project_id, type, filename, filepath, note)
+                    VALUES (?, ?, ?, ?, ?)
+                `).run(req.params.id, type, file.originalname, file.filename, note || '');
+                
+                photos.push({
+                    id: result.lastInsertRowid,
+                    project_id: parseInt(req.params.id),
+                    type,
+                    filename: file.originalname,
+                    filepath: '/uploads/' + file.filename,
+                    note: note || '',
+                    created_at: new Date().toISOString()
+                });
+            }
+        }
         
         if (user_name) logAudit(null, user_name, 'CREATE', 'Photo', `${photos.length} ${type} photo(s)`, `Uploaded ${photos.length} photo(s) for ${type}`);
         res.json(photos);
