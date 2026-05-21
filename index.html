@@ -925,6 +925,7 @@
             <div class="modal-header"><h3 class="modal-title">New Project</h3><button class="modal-close" onclick="hideModal('projectModal')">×</button></div>
             <div class="form-group"><label>Project Name</label><input type="text" class="form-control" id="projectName" placeholder="Enter project name"></div>
             <div class="form-group"><label>Client Name</label><input type="text" class="form-control" id="projectClient" placeholder="Enter client name"></div>
+            <div class="form-group"><label>Vendor</label><input type="text" class="form-control" id="projectVendor" placeholder="Enter vendor name"></div>
             <div class="form-group"><label>Location</label><input type="text" class="form-control" id="projectLocation" placeholder="Enter project location"></div>
             <div class="form-group"><label>Division</label><select class="form-control" id="projectDivision"></select></div>
             <div class="form-group"><label>Start Date</label><input type="date" class="form-control" id="projectStartDate"></div>
@@ -938,6 +939,7 @@
             <div id="adminEditFields">
                 <div class="form-group"><label>Project Name</label><input type="text" class="form-control" id="editProjectName" placeholder="Enter project name"></div>
                 <div class="form-group"><label>Client Name</label><input type="text" class="form-control" id="editProjectClient" placeholder="Enter client name"></div>
+                <div class="form-group"><label>Vendor</label><input type="text" class="form-control" id="editProjectVendor" placeholder="Enter vendor name"></div>
                 <div class="form-group"><label>Location</label><input type="text" class="form-control" id="editProjectLocation" placeholder="Enter project location"></div>
                 <div class="form-group"><label>Division</label><select class="form-control" id="editProjectDivision"></select></div>
                 <div class="form-group"><label>Start Date</label><input type="date" class="form-control" id="editProjectStartDate"></div>
@@ -1367,11 +1369,12 @@
             try {
                 const name = document.getElementById('projectName').value;
                 const client = document.getElementById('projectClient').value;
+                const vendor = document.getElementById('projectVendor').value;
                 const location = document.getElementById('projectLocation').value;
                 const division_id = document.getElementById('projectDivision').value;
                 const start_date = document.getElementById('projectStartDate').value;
                 if (!name) { alert('Please enter project name'); return; }
-                await fetchAPI('/api/projects', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, client, location, division_id, start_date, created_by: currentUser.id }) });
+                await fetchAPI('/api/projects', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, client, vendor, location, division_id, start_date, created_by: currentUser.id }) });
                 hideModal('projectModal');
                 showToast('Project created!');
                 loadProjects();
@@ -1404,6 +1407,7 @@
                 if (isAdminOrManager) {
                     document.getElementById('editProjectName').value = project.name || '';
                     document.getElementById('editProjectClient').value = project.client || '';
+                    document.getElementById('editProjectVendor').value = project.vendor || '';
                     document.getElementById('editProjectLocation').value = project.location || '';
                     document.getElementById('editProjectStartDate').value = project.start_date || '';
                     document.getElementById('editProjectEndDate').value = project.end_date || '';
@@ -1479,6 +1483,7 @@
             if (!currentProject) return;
             const name = document.getElementById('editProjectName').value;
             const client = document.getElementById('editProjectClient').value;
+            const vendor = document.getElementById('editProjectVendor').value;
             const location = document.getElementById('editProjectLocation').value;
             const division_id = document.getElementById('editProjectDivision').value;
             const status = document.getElementById('editProjectStatus').value;
@@ -1486,7 +1491,7 @@
             const end_date = document.getElementById('editProjectEndDate').value;
             if (!name) { alert('Please enter project name'); return; }
             try {
-                await fetchAPI('/api/projects/' + currentProject.id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, client, location, division_id, status, start_date, end_date }) });
+                await fetchAPI('/api/projects/' + currentProject.id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, client, vendor, location, division_id, status, start_date, end_date }) });
                 hideModal('projectEditModal');
                 showToast('Project updated!');
                 loadProjects();
