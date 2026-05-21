@@ -696,7 +696,7 @@
                 <h1>PVPROD</h1>
             </div>
             <div class="header-actions">
-                <div class="user-badge" id="userBadge" onclick="showModal('settingsModal')">Admin</div>
+                <div class="user-badge" id="userBadge">Admin</div>
                 <button class="logout-btn" onclick="logout()">Logout</button>
             </div>
         </div>
@@ -1095,19 +1095,36 @@
         function logout() {
             localStorage.removeItem('pvprod_user');
             currentUser = null;
-            // Reset UI elements
-            document.getElementById('userBadge').textContent = 'Guest';
-            document.getElementById('welcomeName').textContent = 'Guest';
-            document.getElementById('loginSection').classList.add('active');
-            document.getElementById('dashboardSection').classList.remove('active');
-            document.getElementById('projectsSection').classList.remove('active');
-            document.getElementById('masterSection').classList.remove('active');
-            document.getElementById('settingsSection').classList.remove('active');
-            document.getElementById('projectDetailSection').classList.remove('active');
-            // Hide logout button when logged out
-            document.querySelectorAll('.logout-btn').forEach(btn => {
-                btn.style.display = 'none';
-            });
+            // Reset UI for logged out state
+            applyLoginState(false);
+        }
+        
+        function applyLoginState(isLoggedIn) {
+            if (isLoggedIn && currentUser) {
+                // Logged in state
+                document.getElementById('userBadge').textContent = currentUser.name;
+                document.getElementById('userBadge').onclick = () => showModal('settingsModal');
+                document.getElementById('welcomeName').textContent = currentUser.name;
+                document.querySelectorAll('.logout-btn').forEach(btn => {
+                    btn.textContent = 'Logout';
+                    btn.style.display = '';
+                    btn.onclick = logout;
+                });
+            } else {
+                // Logged out state
+                document.getElementById('userBadge').textContent = 'Guest';
+                document.getElementById('userBadge').onclick = null;
+                document.getElementById('welcomeName').textContent = 'Guest';
+                document.getElementById('loginSection').classList.add('active');
+                document.getElementById('dashboardSection').classList.remove('active');
+                document.getElementById('projectsSection').classList.remove('active');
+                document.getElementById('masterSection').classList.remove('active');
+                document.getElementById('settingsSection').classList.remove('active');
+                document.getElementById('projectDetailSection').classList.remove('active');
+                document.querySelectorAll('.logout-btn').forEach(btn => {
+                    btn.style.display = 'none';
+                });
+            }
         }
         
         function showRegister() {
@@ -1157,9 +1174,8 @@
             if (userId) {
                 try {
                     currentUser = await fetchAPI('/api/users/' + userId);
+                    applyLoginState(true);
                     document.getElementById('loginSection').classList.remove('active');
-                    document.getElementById('userBadge').textContent = currentUser.name;
-                    document.getElementById('welcomeName').textContent = currentUser.name;
                     applyPermissions();
                     loadDashboard();
                     loadDivisions();
@@ -1168,10 +1184,7 @@
                     return;
                 } catch (e) { console.error(e); }
             }
-            document.getElementById('loginSection').classList.add('active');
-            document.getElementById('dashboardSection').classList.remove('active');
-            document.getElementById('userBadge').textContent = 'Guest';
-            document.getElementById('welcomeName').textContent = 'Guest';
+            applyLoginState(false);
         }
         
         function applyPermissions() {
