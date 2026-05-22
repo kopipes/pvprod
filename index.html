@@ -1224,7 +1224,7 @@
                 document.getElementById('statChecklist').textContent = `${stats.checkedItems || 0}/${stats.totalChecklist || 0}`;
                 
                 const projects = await fetchAPI('/api/projects');
-                const recent = projects.slice(0, 3);
+                const recent = projects.slice(0, 10);
                 const container = document.getElementById('recentProjects');
                 if (recent.length === 0) {
                     container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><h4>No Projects Yet</h4><p>Create your first project to get started</p></div>';
