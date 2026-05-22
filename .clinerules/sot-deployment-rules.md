@@ -20,6 +20,15 @@
 - Do not modify global VPS config unless explicitly required and confirmed.
 - Do not overwrite existing `.env`, Nginx configs, PM2 configs, systemd services, or database data without backup/confirmation.
 
+## Sync Requirement
+- If there are any code, config, or deployment changes, make sure local, GitHub, and VPS are synchronized.
+- Before deployment, check local status with `git status`.
+- Make sure local committed changes are pushed to GitHub.
+- Make sure the VPS pulls the correct latest commit from GitHub.
+- After deployment, verify the VPS is running the same commit as GitHub.
+- Do not leave changes only on local, only on GitHub, or only on the VPS unless explicitly instructed.
+- If there is a mismatch between local, GitHub, and VPS, stop and report the mismatch before continuing.
+
 ## Deployment Safety Checklist
 Before deployment:
 1. Confirm target app is SOT.
@@ -30,3 +39,5 @@ Before deployment:
 6. If database structure will change, backup the VPS database first.
 7. Deploy without affecting unrelated apps/services.
 8. Verify SOT works after deployment.
+9. Confirm local, GitHub, and VPS are synchronized.
+10. Confirm VPS is running the latest intended GitHub commit.
