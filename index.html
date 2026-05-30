@@ -706,6 +706,7 @@
         <button class="nav-btn active" data-section="dashboard">🏠 Dashboard</button>
         <button class="nav-btn" data-section="projects">📋 Projects</button>
         <button class="nav-btn admin-only" data-section="master">⚙️ Master</button>
+        <button class="nav-btn admin-only" data-section="cleanup">🧹 Cleanup</button>
         <button class="nav-btn" data-section="settings">👤 Settings</button>
     </nav>
     
@@ -785,6 +786,15 @@
             <div id="projectsList"></div>
         </section>
         
+        <section id="cleanupSection" class="section">
+            <div class="card">
+                <div class="card-header"><span class="card-icon">🧹</span><h3 class="card-title">Cleanup Orphaned Files</h3></div>
+                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">Remove files in uploads folder that are no longer linked to any project in the database.</p>
+                <button class="btn btn-secondary btn-block" onclick="loadOrphanedFiles()">🔍 Scan for Orphaned Files</button>
+                <div id="orphanedFilesList" style="margin-top: 16px;"></div>
+            </div>
+        </section>
+        
         <section id="masterSection" class="section">
             <div class="status-tabs">
                 <button class="status-tab active" data-tab="divisions">Divisions</button>
@@ -802,8 +812,17 @@
                 <div id="usersList"></div>
             </div>
             <div id="auditTab" class="hidden">
-                <div class="form-group" style="margin-bottom: 12px;"><input type="text" class="form-control" id="auditSearchInput" placeholder="Search audit logs..." oninput="filterAudit()"></div>
+                <div class="form-group" style="margin-bottom: 12px;"><input type="text" class="form-control" id="auditSearchInput" placeholder="Search audit logs..." oninput="searchAudit()"></div>
                 <div id="auditList"></div>
+                <div id="auditPagination" style="display: flex; justify-content: center; gap: 8px; margin-top: 16px; flex-wrap: wrap;"></div>
+            </div>
+            <div id="cleanupTab" class="hidden">
+                <div class="card">
+                    <div class="card-header"><span class="card-icon">🧹</span><h3 class="card-title">Cleanup Orphaned Files</h3></div>
+                    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">Remove files in uploads folder that are no longer linked to any project in the database.</p>
+                    <button class="btn btn-secondary btn-block" onclick="loadOrphanedFiles()">🔍 Scan for Orphaned Files</button>
+                    <div id="orphanedFilesList" style="margin-top: 16px;"></div>
+                </div>
             </div>
             <div id="pendingTab" class="hidden">
                 <div id="pendingList"></div>
@@ -1970,35 +1989,187 @@
             });
         }
         
-        let allAuditLogs = [];
+        let auditPage = 1;
+        let auditTotalPages = 1;
+        let auditSearch = '';
         
         async function loadAudit() {
             try {
-                allAuditLogs = await fetchAPI('/api/audit');
-                renderAudit(allAuditLogs);
+                const search = document.getElementById('auditSearchInput').value || '';
+                const data = await fetchAPI(`/api/audit?page=${auditPage}&limit=10&search=${encodeURIComponent(search)}`);
+                auditTotalPages = data.pagination.totalPages;
+                renderAudit(data.logs);
+                renderAuditPagination();
             } catch (e) { console.error(e); }
         }
         
         function renderAudit(logs) {
             const container = document.getElementById('auditList');
-            if (logs.length === 0) {
+            if (!logs || logs.length === 0) {
                 container.innerHTML = '<div class="empty-state"><p>No audit logs found</p></div>';
             } else {
-                const actionColors = { CREATE: '#10b981', UPDATE: '#3b82f6', DELETE: '#ef4444' };
-                container.innerHTML = logs.map(log => `<div class="list-item" style="border-left: 4px solid ${actionColors[log.action] || '#64748b'}"><div class="list-item-title">${log.user_name || 'System'}</div><div class="list-item-sub"><span style="font-weight: 600; color: ${actionColors[log.action]}">${log.action}</span> ${log.entity_type}: <strong>${log.entity_name || '-'}</strong></div><div class="list-item-sub" style="margin-top: 8px;">${log.details || ''}</div><div class="list-item-sub" style="opacity: 0.6; font-size: 11px; margin-top: 4px;">${formatDate(log.created_at)}</div></div>`).join('');
+                const actionColors = { CREATE: '#10b981', UPDATE: '#3b82f6', DELETE: '#ef4444', APPROVE: '#10b981', REJECT: '#ef4444' };
+                container.innerHTML = logs.map(log => `<div class="list-item" style="border-left: 4px solid ${actionColors[log.action] || '#64748b'}"><div class="list-item-title">${log.user_name || 'System'}</div><div class="list-item-sub"><span style="font-weight: 600; color: ${actionColors[log.action] || '#64748b'}">${log.action}</span> ${log.entity_type}: <strong>${log.entity_name || '-'}</strong></div><div class="list-item-sub" style="margin-top: 8px;">${log.details || ''}</div><div class="list-item-sub" style="opacity: 0.6; font-size: 11px; margin-top: 4px;">${formatDate(log.created_at)}</div></div>`).join('');
             }
         }
         
-        function filterAudit() {
-            const search = document.getElementById('auditSearchInput').value.toLowerCase();
-            const filtered = allAuditLogs.filter(log => 
-                (log.user_name && log.user_name.toLowerCase().includes(search)) ||
-                (log.action && log.action.toLowerCase().includes(search)) ||
-                (log.entity_type && log.entity_type.toLowerCase().includes(search)) ||
-                (log.entity_name && log.entity_name.toLowerCase().includes(search)) ||
-                (log.details && log.details.toLowerCase().includes(search))
-            );
-            renderAudit(filtered);
+        function renderAuditPagination() {
+            const container = document.getElementById('auditPagination');
+            if (auditTotalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+            let html = '';
+            // Previous button
+            html += `<button class="btn btn-outline btn-sm" onclick="goToAuditPage(${auditPage - 1})" ${auditPage === 1 ? 'disabled' : ''}>← Prev</button>`;
+            // Page numbers
+            for (let i = 1; i <= auditTotalPages; i++) {
+                if (i === 1 || i === auditTotalPages || (i >= auditPage - 1 && i <= auditPage + 1)) {
+                    html += `<button class="btn btn-sm ${i === auditPage ? 'btn-primary' : 'btn-outline'}" onclick="goToAuditPage(${i})">${i}</button>`;
+                } else if (i === auditPage - 2 || i === auditPage + 2) {
+                    html += `<span style="padding: 8px;">...</span>`;
+                }
+            }
+            // Next button
+            html += `<button class="btn btn-outline btn-sm" onclick="goToAuditPage(${auditPage + 1})" ${auditPage === auditTotalPages ? 'disabled' : ''}>Next →</button>`;
+            container.innerHTML = html;
+        }
+        
+        function goToAuditPage(page) {
+            if (page < 1 || page > auditTotalPages) return;
+            auditPage = page;
+            loadAudit();
+        }
+        
+        function searchAudit() {
+            auditPage = 1;
+            loadAudit();
+        }
+        
+        let selectedOrphanedFiles = new Set();
+        
+        async function loadOrphanedFiles() {
+            try {
+                const data = await fetchAPI('/api/admin/orphaned-files');
+                const container = document.getElementById('orphanedFilesList');
+                selectedOrphanedFiles.clear();
+                
+                if (!data.orphanedFiles || data.orphanedFiles.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><p>✅ No orphaned files found. Your uploads folder is clean!</p></div>';
+                    return;
+                }
+                
+                let html = `<div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;"><strong>Found ${data.count} orphaned file(s):</strong><button class="btn btn-outline btn-sm" onclick="selectAllOrphaned()">☑️ Select All</button></div>`;
+                data.orphanedFiles.forEach(f => {
+                    const sizeKB = (f.size / 1024).toFixed(1);
+                    html += `<div class="list-item" style="cursor: pointer; padding: 12px 16px;" onclick="toggleOrphanedFile('${f.filename}', this)">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div id="check-${f.filename}" style="width: 24px; height: 24px; border: 2px solid var(--border); border-radius: 6px;"></div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; font-size: 14px;">${f.filename}</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">${sizeKB} KB • ${formatDate(f.created)}</div>
+                            </div>
+                        </div>
+                    </div>`;
+                });
+                html += `<button class="btn btn-danger btn-block mt-3" onclick="deleteOrphanedFiles()" id="deleteOrphanedBtn" disabled>🗑️ Delete Selected (0)</button>`;
+                container.innerHTML = html;
+            } catch (e) { alert('Error scanning files'); }
+        }
+        
+        function toggleOrphanedFile(filename, element) {
+            const check = document.getElementById('check-' + filename);
+            if (selectedOrphanedFiles.has(filename)) {
+                selectedOrphanedFiles.delete(filename);
+                check.style.background = 'transparent';
+                check.style.borderColor = 'var(--border)';
+            } else {
+                selectedOrphanedFiles.add(filename);
+                check.style.background = 'var(--success)';
+                check.style.borderColor = 'var(--success)';
+                check.innerHTML = '✓';
+                check.style.color = 'white';
+            }
+            const btn = document.getElementById('deleteOrphanedBtn');
+            btn.disabled = selectedOrphanedFiles.size === 0;
+            btn.textContent = `🗑️ Delete Selected (${selectedOrphanedFiles.size})`;
+        }
+        
+        let currentOrphanedFiles = [];
+        
+        async function loadOrphanedFiles() {
+            try {
+                const data = await fetchAPI('/api/admin/orphaned-files');
+                const container = document.getElementById('orphanedFilesList');
+                selectedOrphanedFiles.clear();
+                currentOrphanedFiles = data.orphanedFiles || [];
+                
+                if (currentOrphanedFiles.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><p>✅ No orphaned files found. Your uploads folder is clean!</p></div>';
+                    return;
+                }
+                
+                let html = `<div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;"><strong>Found ${data.count} orphaned file(s):</strong><button class="btn btn-outline btn-sm" onclick="selectAllOrphaned()">☑️ Select All</button></div>`;
+                currentOrphanedFiles.forEach(f => {
+                    const sizeKB = (f.size / 1024).toFixed(1);
+                    html += `<div class="list-item" style="cursor: pointer; padding: 12px 16px;" onclick="toggleOrphanedFile('${f.filename}', this)">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div id="check-${f.filename}" style="width: 24px; height: 24px; border: 2px solid var(--border); border-radius: 6px;"></div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; font-size: 14px;">${f.filename}</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">${sizeKB} KB • ${formatDate(f.created)}</div>
+                            </div>
+                        </div>
+                    </div>`;
+                });
+                html += `<button class="btn btn-danger btn-block mt-3" onclick="deleteOrphanedFiles()" id="deleteOrphanedBtn" disabled>🗑️ Delete Selected (0)</button>`;
+                container.innerHTML = html;
+            } catch (e) { alert('Error scanning files'); }
+        }
+        
+        function selectAllOrphaned() {
+            if (selectedOrphanedFiles.size === currentOrphanedFiles.length) {
+                // Deselect all
+                selectedOrphanedFiles.clear();
+                currentOrphanedFiles.forEach(f => {
+                    const check = document.getElementById('check-' + f.filename);
+                    if (check) {
+                        check.style.background = 'transparent';
+                        check.style.borderColor = 'var(--border)';
+                        check.innerHTML = '';
+                    }
+                });
+            } else {
+                // Select all
+                currentOrphanedFiles.forEach(f => {
+                    selectedOrphanedFiles.add(f.filename);
+                    const check = document.getElementById('check-' + f.filename);
+                    if (check) {
+                        check.style.background = 'var(--success)';
+                        check.style.borderColor = 'var(--success)';
+                        check.innerHTML = '✓';
+                        check.style.color = 'white';
+                    }
+                });
+            }
+            const btn = document.getElementById('deleteOrphanedBtn');
+            btn.disabled = selectedOrphanedFiles.size === 0;
+            btn.textContent = `🗑️ Delete Selected (${selectedOrphanedFiles.size})`;
+        }
+        
+        async function deleteOrphanedFiles() {
+            if (selectedOrphanedFiles.size === 0) return;
+            showConfirm(`Are you sure you want to delete ${selectedOrphanedFiles.size} file(s)? This cannot be undone.`, async () => {
+                try {
+                    const result = await fetchAPI('/api/admin/orphaned-files', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ filenames: Array.from(selectedOrphanedFiles) })
+                    });
+                    showToast(`Deleted ${result.count} file(s)!`);
+                    loadOrphanedFiles();
+                } catch (e) { alert('Error deleting files'); }
+            });
         }
         
         function showModal(id) { document.getElementById(id).classList.add('active'); }

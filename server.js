@@ -32,7 +32,7 @@ const storage = multer.diskStorage({
     }
 });
 
-const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
+const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
 
 // Middleware
 app.use(cors());
@@ -598,15 +598,90 @@ app.delete('/api/projects/:id/members/:userId', (req, res) => {
     }
 });
 
-// Audit Logs
+// Audit Logs with pagination and search
 app.get('/api/audit', (req, res) => {
     try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const search = req.query.search || '';
+        const offset = (page - 1) * limit;
+        
+        let whereClause = '';
+        let params = [];
+        
+        if (search) {
+            whereClause = `WHERE user_name LIKE ? OR action LIKE ? OR entity_type LIKE ? OR entity_name LIKE ? OR details LIKE ?`;
+            params = [`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`];
+        }
+        
+        const countResult = db.prepare(`SELECT COUNT(*) as total FROM audit_logs ${whereClause}`).get(...params);
+        const total = countResult.total;
+        
         const logs = db.prepare(`
             SELECT * FROM audit_logs 
+            ${whereClause}
             ORDER BY created_at DESC 
-            LIMIT 100
-        `).all();
-        res.json(logs);
+            LIMIT ? OFFSET ?
+        `).all(...params, limit, offset);
+        
+        res.json({
+            logs,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get orphaned files (files in uploads folder but not in database)
+app.get('/api/admin/orphaned-files', (req, res) => {
+    try {
+        const dbPhotos = db.prepare('SELECT filepath FROM photos').all();
+        const dbFilenames = new Set(dbPhotos.map(p => p.filepath.replace('/uploads/', '')));
+        
+        const files = fs.readdirSync(uploadsDir);
+        const orphaned = files.filter(f => !dbFilenames.has(f) && !f.startsWith('.'));
+        
+        res.json({
+            orphanedFiles: orphaned.map(f => ({
+                filename: f,
+                size: fs.statSync(path.join(uploadsDir, f)).size,
+                created: fs.statSync(path.join(uploadsDir, f)).birthtime
+            })),
+            count: orphaned.length
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Delete orphaned files
+app.delete('/api/admin/orphaned-files', (req, res) => {
+    try {
+        const { filenames } = req.body;
+        if (!filenames || !Array.isArray(filenames)) {
+            return res.status(400).json({ error: 'filenames array required' });
+        }
+        
+        const deleted = [];
+        const errors = [];
+        
+        for (const filename of filenames) {
+            const filepath = path.join(uploadsDir, filename);
+            if (fs.existsSync(filepath)) {
+                fs.unlinkSync(filepath);
+                deleted.push(filename);
+            } else {
+                errors.push(filename);
+            }
+        }
+        
+        res.json({ deleted, errors, count: deleted.length });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
