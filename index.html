@@ -1190,13 +1190,22 @@
             applyLoginState(false);
         }
         
+        // Never render an empty name: fall back to the email local-part, then a default
+        function displayName(u) {
+            if (!u) return 'User';
+            const n = (u.name || '').trim();
+            if (n) return n;
+            if (u.email) return u.email.split('@')[0];
+            return 'User';
+        }
+
         function applyLoginState(isLoggedIn) {
             document.body.classList.toggle('logged-in', !!(isLoggedIn && currentUser));
             if (isLoggedIn && currentUser) {
                 // Logged in state
-                document.getElementById('userBadge').textContent = currentUser.name;
+                document.getElementById('userBadge').textContent = displayName(currentUser);
                 document.getElementById('userBadge').onclick = () => showModal('settingsModal');
-                document.getElementById('welcomeName').textContent = currentUser.name;
+                document.getElementById('welcomeName').textContent = displayName(currentUser);
                 document.querySelectorAll('.logout-btn').forEach(btn => {
                     btn.textContent = 'Logout';
                     btn.style.display = '';
@@ -1463,7 +1472,7 @@
         
         function loadProfile() {
             if (!currentUser) return;
-            document.getElementById('profileInfo').innerHTML = `<div style="text-align: center; margin-bottom: 20px;"><div class="user-avatar" style="width: 80px; height: 80px; font-size: 32px; margin: 0 auto 12px;">${currentUser.name.charAt(0).toUpperCase()}</div><h4 style="font-size: 18px; font-weight: 700;">${currentUser.name}</h4><span class="role-badge role-${currentUser.role}">${currentUser.role}</span>${currentUser.division_name ? '<p style="margin-top: 8px; color: var(--text-secondary);">' + currentUser.division_name + '</p>' : ''}</div><button class="btn btn-secondary btn-block" onclick="editProfile()">Edit Profile</button>`;
+            document.getElementById('profileInfo').innerHTML = `<div style="text-align: center; margin-bottom: 20px;"><div class="user-avatar" style="width: 80px; height: 80px; font-size: 32px; margin: 0 auto 12px;">${displayName(currentUser).charAt(0).toUpperCase()}</div><h4 style="font-size: 18px; font-weight: 700;">${displayName(currentUser)}</h4><span class="role-badge role-${currentUser.role}">${currentUser.role}</span>${currentUser.division_name ? '<p style="margin-top: 8px; color: var(--text-secondary);">' + currentUser.division_name + '</p>' : ''}</div><button class="btn btn-secondary btn-block" onclick="editProfile()">Edit Profile</button>`;
         }
         
         function editProfile() {
@@ -1482,8 +1491,8 @@
                 hideModal('settingsModal');
                 showToast('Settings saved!');
                 currentUser.name = name; currentUser.email = email; currentUser.phone = phone;
-                document.getElementById('userBadge').textContent = name;
-                document.getElementById('welcomeName').textContent = name;
+                document.getElementById('userBadge').textContent = displayName(currentUser);
+                document.getElementById('welcomeName').textContent = displayName(currentUser);
                 loadProfile();
             } catch (e) { alert('Error saving settings'); }
         }
