@@ -2,3 +2,7 @@ node_modules/
 uploads/
 *.db
 .DS_Store
+
+# Deployment secrets — infra host/SSH details, never commit
+DEPLOY.local.md
+*.local.md

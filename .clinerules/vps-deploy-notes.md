@@ -2,21 +2,20 @@
 
 ## IMPORTANT: Correct Path
 - **App path:** `/opt/pvprod` (NOT `/var/www/pvprod`)
-- **Service:** PM2 running from `/opt/pvprod/server.js`
+- **Service:** PM2 running from `/opt/pvprod/server.js`, app name `pvprod`, port 3001
 
-## Deployment Steps
+## Host / SSH details
+Infrastructure access details (host IP, SSH key, full deploy commands) are kept in
+**`DEPLOY.local.md`** at the repo root — that file is **gitignored and not committed**.
+Ask the project owner for it if you don't have it. Do not add host/SSH details back
+into this tracked file.
+
+## Deployment flow (summary)
 ```bash
-# 1. SSH to VPS
-ssh -i ~/.ssh/id_ed25519 root@***REDACTED***
-
-# 2. Deploy to correct path
+# SSH to the VPS (see DEPLOY.local.md for host + key)
 cd /opt/pvprod && git pull origin master
-
-# 3. Restart PM2 service
 pm2 restart pvprod
-
-# 4. Verify
-pm2 show pvprod | grep script path
+# verify: git rev-parse HEAD  should match GitHub origin/master
 ```
 
 ## Common Issues
