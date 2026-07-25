@@ -386,19 +386,39 @@
         .checklist-meta { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
         
         .list-item {
-            padding: 20px;
+            padding: 12px 14px;
             background: var(--bg);
-            border-radius: 16px;
-            margin-bottom: 12px;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 14px;
+            margin-bottom: 8px;
+            transition: border-color 0.25s ease, transform 0.25s var(--ease);
             border: 2px solid transparent;
         }
-        
-        .list-item:hover { border-color: var(--secondary); transform: translateX(4px); }
-        
-        .list-item-title { font-weight: 700; font-size: 16px; }
-        .list-item-sub { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+        .list-item:hover { border-color: var(--brand); }
+
+        .list-item-title { font-weight: 700; font-size: 14.5px; }
+        .list-item-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+        /* Shared compact row layout for list rows (admin divisions/users) */
+        .li-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .li-main { min-width: 0; flex: 1; }
+        .li-main .list-item-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .li-main .list-item-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .li-main .list-item-sub .role-badge { margin-right: 4px; }
+        .li-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+        .icon-btn {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            background: var(--card);
+            cursor: pointer;
+            font-size: 15px;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .icon-btn:hover { border-color: var(--brand); transform: translateY(-1px); }
+        .icon-btn.danger:hover { border-color: var(--error); color: var(--error); }
         
         .list-item-badge {
             display: inline-block;
@@ -555,37 +575,33 @@
         
         .project-card {
             background: var(--card);
-            border-radius: var(--radius);
-            padding: 24px;
-            margin-bottom: 16px;
-            box-shadow: var(--shadow-md);
-            border-left: 5px solid;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 16px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            box-shadow: var(--shadow-sm);
+            border-left: 4px solid;
+            transition: transform 0.25s var(--ease), box-shadow 0.25s ease;
             position: relative;
             overflow: hidden;
         }
-        
-        .project-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 100px;
-            height: 100px;
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), transparent);
-            border-radius: 0 0 0 100%;
-        }
-        
-        .project-card:hover { transform: translateY(-4px) scale(1.02); box-shadow: var(--shadow-xl); }
-        
+
+        .project-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
         .project-card[data-status="pre-loading"] { border-color: var(--warning); }
         .project-card[data-status="loading-in"] { border-color: var(--secondary); }
         .project-card[data-status="loading-out"] { border-color: var(--accent); }
         .project-card[data-status="completed"] { border-color: var(--success); }
-        
-        .project-name { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
-        .project-client { font-size: 14px; color: var(--text-secondary); }
-        .project-meta { display: flex; gap: 16px; margin-top: 16px; font-size: 13px; color: var(--text-secondary); }
+
+        .project-name { font-size: 15px; font-weight: 800; }
+        .project-client { font-size: 12.5px; color: var(--text-secondary); margin-top: 1px; }
+        .project-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; font-size: 11.5px; color: var(--text-secondary); }
+
+        /* Compact project-card row: text left, status/actions right */
+        .pc-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .pc-main { min-width: 0; flex: 1; }
+        .pc-main .project-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .pc-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .pc-row .list-item-badge { margin-top: 0; flex-shrink: 0; }
         .meta-item { display: flex; align-items: center; gap: 6px; font-weight: 500; }
         
         .phase-progress { display: flex; gap: 6px; margin: 20px 0; }
@@ -1351,7 +1367,7 @@
                 container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><h4>No Projects Yet</h4><p>Create your first project to get started</p></div>';
                 document.getElementById('recentProjectsPagination').innerHTML = '';
             } else {
-                container.innerHTML = pageProjects.map(p => `<div class="project-card" data-status="${p.status}" onclick="viewProject('${p.id}')"><div class="project-name">${p.name}</div><div class="project-client">${p.client}</div><span class="list-item-badge status-${p.status === 'pre-loading' ? 'pending' : p.status === 'completed' ? 'done' : 'progress'}">${formatStatus(p.status)}</span></div>`).join('');
+                container.innerHTML = pageProjects.map(p => `<div class="project-card" data-status="${p.status}" onclick="viewProject('${p.id}')"><div class="pc-row"><div class="pc-main"><div class="project-name">${p.name}</div><div class="project-client">${p.client || ''}</div></div><span class="list-item-badge status-${p.status === 'pre-loading' ? 'pending' : p.status === 'completed' ? 'done' : 'progress'}">${formatStatus(p.status)}</span></div></div>`).join('');
                 renderRecentProjectsPagination(totalPages);
             }
         }
@@ -1395,7 +1411,7 @@
                 if (divisions.length === 0) {
                     container.innerHTML = '<div class="empty-state"><p>No divisions yet</p></div>';
                 } else {
-                    container.innerHTML = divisions.map(d => `<div class="list-item"><div class="list-item-title">${d.name}</div><div class="list-item-sub">Created ${formatDate(d.created_at)}</div><div style="display: flex; gap: 8px; margin-top: 12px;">${currentUser.role === 'admin' ? `<button class="btn btn-outline btn-sm" onclick="showEditDivision(${d.id}, '${d.name}')" style="flex: 1;">✏️ Edit</button><button class="btn btn-outline btn-sm" onclick="deleteDivision(${d.id})" style="color: var(--error);">Delete</button>` : ''}</div></div>`).join('');
+                    container.innerHTML = divisions.map(d => `<div class="list-item"><div class="li-row"><div class="li-main"><div class="list-item-title">${d.name}</div><div class="list-item-sub">Created ${formatDate(d.created_at)}</div></div>${currentUser.role === 'admin' ? `<div class="li-actions"><button class="icon-btn" title="Edit" onclick="showEditDivision(${d.id}, '${d.name}')">✏️</button><button class="icon-btn danger" title="Delete" onclick="deleteDivision(${d.id})">🗑️</button></div>` : ''}</div></div>`).join('');
                 }
             } catch (e) { console.error(e); }
         }
@@ -1415,7 +1431,7 @@
             if (users.length === 0) {
                 container.innerHTML = '<div class="empty-state"><p>No users found</p></div>';
             } else {
-                container.innerHTML = users.map(u => `<div class="list-item"><div class="list-item-title">${u.name}</div><div class="list-item-sub">${u.email || ''} ${u.phone ? '• ' + u.phone : ''}</div><span class="role-badge role-${u.role}">${u.role}</span>${currentUser.role === 'admin' ? `<div style="display: flex; gap: 8px; margin-top: 12px;"><button class="btn btn-outline btn-sm" onclick="showEditUser(${u.id})" style="flex: 1;">✏️ Edit</button><button class="btn btn-outline btn-sm" onclick="deleteUser(${u.id})" style="color: var(--error);">Delete</button></div>` : ''}</div>`).join('');
+                container.innerHTML = users.map(u => `<div class="list-item"><div class="li-row"><div class="li-main"><div class="list-item-title">${displayName(u)}</div><div class="list-item-sub"><span class="role-badge role-${u.role}">${u.role}</span> ${u.email || ''}${u.phone ? ' • ' + u.phone : ''}</div></div>${currentUser.role === 'admin' ? `<div class="li-actions"><button class="icon-btn" title="Edit" onclick="showEditUser(${u.id})">✏️</button><button class="icon-btn danger" title="Delete" onclick="deleteUser(${u.id})">🗑️</button></div>` : ''}</div></div>`).join('');
             }
         }
         
@@ -1501,7 +1517,7 @@
                 if (filtered.length === 0) {
                     container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><h4>No Projects Found</h4><p>Try adjusting your filters or create a new project</p></div>';
                 } else {
-                    container.innerHTML = filtered.map(p => `<div class="project-card" data-status="${p.status}"><div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 10;"><div onclick="viewProject('${p.id}')" style="flex: 1; cursor: pointer;"><div class="project-name">${p.name}</div><div class="project-client">${p.client}</div><div class="project-meta"><span class="meta-item">📁 ${p.division_name || 'No Division'}</span><span class="meta-item">📅 ${formatDate(p.start_date)}</span>${p.end_date ? '<span class="meta-item">→ ' + formatDate(p.end_date) + '</span>' : ''}</div></div><button id="editBtn${p.id}" onclick="event.stopPropagation(); showProjectEdit('${p.id}')" class="btn btn-secondary btn-sm" style="padding: 12px 20px; font-size: 18px; min-width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; z-index: 20;">✏️</button></div><span class="list-item-badge status-${p.status === 'pre-loading' ? 'pending' : p.status === 'completed' ? 'done' : 'progress'}">${formatStatus(p.status)}</span></div>`).join('');
+                    container.innerHTML = filtered.map(p => `<div class="project-card" data-status="${p.status}"><div class="pc-row"><div class="pc-main" onclick="viewProject('${p.id}')" style="cursor: pointer;"><div class="pc-head"><span class="project-name">${p.name}</span><span class="list-item-badge status-${p.status === 'pre-loading' ? 'pending' : p.status === 'completed' ? 'done' : 'progress'}">${formatStatus(p.status)}</span></div><div class="project-client">${p.client || ''}</div><div class="project-meta"><span class="meta-item">📁 ${p.division_name || 'No Division'}</span><span class="meta-item">📅 ${formatDate(p.start_date)}</span>${p.end_date ? '<span class="meta-item">→ ' + formatDate(p.end_date) + '</span>' : ''}</div></div><button onclick="event.stopPropagation(); showProjectEdit('${p.id}')" class="icon-btn" title="Edit project">✏️</button></div></div>`).join('');
                 
                 document.querySelectorAll('.edit-project-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
