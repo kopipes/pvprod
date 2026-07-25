@@ -313,7 +313,12 @@ app.put('/api/users/:id/settings', (req, res) => {
 app.get('/api/projects', (req, res) => {
     try {
         const projects = db.prepare(`
-            SELECT p.*, d.name as division_name, u.name as creator_name
+            SELECT p.*, d.name as division_name, u.name as creator_name,
+                   MAX(
+                       p.created_at,
+                       COALESCE((SELECT MAX(created_at) FROM photos WHERE project_id = p.id), p.created_at),
+                       COALESCE((SELECT MAX(created_at) FROM checklist_items WHERE project_id = p.id), p.created_at)
+                   ) AS last_activity
             FROM projects p
             LEFT JOIN divisions d ON p.division_id = d.id
             LEFT JOIN users u ON p.created_by = u.id
