@@ -10,44 +10,63 @@
             --primary: #0f172a;
             --primary-light: #1e293b;
             --secondary: #3b82f6;
-            --accent: #f97316;
+            --brand: #6366f1;          /* indigo — modern interactive accent */
+            --brand-2: #8b5cf6;        /* violet */
+            --accent: #f97316;         /* signature orange — primary CTA */
+            --accent-2: #fb923c;
             --success: #10b981;
             --warning: #eab308;
             --error: #ef4444;
-            --bg: #f8fafc;
+            --bg: #eef1f8;
+            --bg-soft: #f6f8fc;
             --card: #ffffff;
             --text-primary: #0f172a;
             --text-secondary: #64748b;
-            --border: #e2e8f0;
-            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
-            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
-            --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
-            --radius: 16px;
-            --radius-sm: 10px;
-            --radius-lg: 24px;
+            --text-muted: #94a3b8;
+            --border: #e6eaf2;
+            --shadow-sm: 0 1px 2px rgba(15,23,42,0.05);
+            --shadow-md: 0 6px 16px -6px rgba(15,23,42,0.12), 0 2px 6px -2px rgba(15,23,42,0.06);
+            --shadow-lg: 0 14px 30px -10px rgba(15,23,42,0.16), 0 4px 10px -6px rgba(15,23,42,0.08);
+            --shadow-xl: 0 26px 50px -16px rgba(15,23,42,0.22), 0 10px 20px -12px rgba(15,23,42,0.1);
+            --shadow-brand: 0 10px 26px -8px rgba(99,102,241,0.5);
+            --shadow-accent: 0 10px 26px -8px rgba(249,115,22,0.5);
+            --radius: 20px;
+            --radius-sm: 12px;
+            --radius-lg: 26px;
+            --nav-h: 68px;
+            --ease: cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #f0f4ff 0%, #f8fafc 50%, #f0fdf4 100%);
+            background:
+                radial-gradient(1200px 600px at 100% -5%, rgba(99,102,241,0.10), transparent 60%),
+                radial-gradient(1000px 500px at -10% 110%, rgba(16,185,129,0.10), transparent 55%),
+                var(--bg-soft);
+            background-attachment: fixed;
             color: var(--text-primary);
             min-height: 100vh;
-            padding-bottom: 100px;
+            padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 28px);
             -webkit-font-smoothing: antialiased;
         }
+
+        /* Header + bottom nav only when authenticated */
+        body:not(.logged-in) .header,
+        body:not(.logged-in) .bottom-nav { display: none; }
+        body:not(.logged-in) { padding-bottom: 0; }
+        body:not(.logged-in) .main { padding-top: 8px; }
         
         .header {
             background: linear-gradient(135deg, var(--primary) 0%, #1e3a5f 100%);
             color: white;
-            padding: 20px;
+            padding: 14px 20px;
             position: sticky;
             top: 0;
             z-index: 100;
             backdrop-filter: blur(20px);
-            box-shadow: 0 4px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 6px 24px -8px rgba(15,23,42,0.4);
         }
         
         .header-content {
@@ -102,43 +121,79 @@
         
         .logout-btn:hover { background: rgba(255,255,255,0.2); transform: translateY(-1px); }
         
-        .nav {
-            background: var(--card);
-            border-bottom: 1px solid var(--border);
-            padding: 12px 16px;
+        /* ===== Bottom tab bar ===== */
+        .bottom-nav {
+            position: fixed;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 0;
+            width: 100%;
+            max-width: 520px;
             display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            position: sticky;
-            top: 76px;
-            z-index: 99;
-            scrollbar-width: none;
+            align-items: center;
+            justify-content: space-around;
+            gap: 4px;
+            height: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
+            padding: 0 12px env(safe-area-inset-bottom, 0px);
+            background: rgba(255,255,255,0.82);
+            backdrop-filter: blur(18px) saturate(180%);
+            -webkit-backdrop-filter: blur(18px) saturate(180%);
+            border-top: 1px solid var(--border);
+            box-shadow: 0 -10px 30px -12px rgba(15,23,42,0.18);
+            z-index: 120;
         }
-        
-        .nav::-webkit-scrollbar { display: none; }
-        
-        .nav-btn {
-            padding: 10px 20px;
+
+        .tab-btn {
+            flex: 1;
             border: none;
-            background: var(--bg);
-            border-radius: 30px;
-            font-size: 13px;
+            background: transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            padding: 8px 4px;
+            font-family: inherit;
+            font-size: 11px;
             font-weight: 600;
-            white-space: nowrap;
+            color: var(--text-muted);
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            color: var(--text-secondary);
+            border-radius: 14px;
+            transition: color 0.25s ease, transform 0.25s var(--ease);
         }
-        
-        .nav-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-        
-        .nav-btn.active {
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+
+        .tab-btn .tab-ico {
+            font-size: 21px;
+            line-height: 1;
+            transition: transform 0.3s var(--ease);
+            filter: grayscale(0.4);
+            opacity: 0.75;
+        }
+
+        .tab-btn.active { color: var(--brand); }
+        .tab-btn.active .tab-ico { transform: translateY(-3px) scale(1.12); filter: none; opacity: 1; }
+        .tab-btn:active { transform: scale(0.92); }
+
+        /* Center create action */
+        .tab-fab {
+            flex: 0 0 auto;
+            width: 58px;
+            height: 58px;
+            margin-top: -26px;
+            border: none;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
             color: white;
-            box-shadow: 0 4px 15px rgba(15, 23, 42, 0.3);
+            font-size: 30px;
+            font-weight: 400;
+            line-height: 1;
+            cursor: pointer;
+            box-shadow: var(--shadow-accent), 0 0 0 5px rgba(255,255,255,0.9);
+            transition: transform 0.3s var(--ease), box-shadow 0.3s ease;
         }
-        
-        .main { padding: 20px; max-width: 800px; margin: 0 auto; }
+        .tab-fab:hover { transform: translateY(-3px) rotate(90deg); }
+        .tab-fab:active { transform: scale(0.9); }
+
+        .main { padding: 22px 20px; max-width: 800px; margin: 0 auto; }
         
         .section { display: none; animation: fadeIn 0.3s ease; }
         .section.active { display: block; }
@@ -152,13 +207,13 @@
             background: var(--card);
             border-radius: var(--radius);
             padding: 24px;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
             box-shadow: var(--shadow-md);
-            border: 1px solid rgba(0,0,0,0.02);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid var(--border);
+            transition: transform 0.3s var(--ease), box-shadow 0.3s ease;
         }
-        
-        .card:hover { transform: translateY(-2px); box-shadow: var(--shadow-xl); }
+
+        .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
         
         .card-header {
             display: flex;
@@ -459,13 +514,14 @@
         .stat-card {
             background: var(--card);
             border-radius: var(--radius);
-            padding: 24px;
+            padding: 22px 20px;
             text-align: center;
             box-shadow: var(--shadow-md);
-            transition: all 0.3s;
+            border: 1px solid var(--border);
+            transition: transform 0.3s var(--ease), box-shadow 0.3s ease;
         }
-        
-        .stat-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-xl); }
+
+        .stat-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
         
         .stat-icon {
             width: 48px;
@@ -479,9 +535,10 @@
         }
         
         .stat-value {
-            font-size: 32px;
+            font-size: 34px;
             font-weight: 800;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, var(--brand), var(--secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -528,7 +585,7 @@
         .phase-bar { flex: 1; height: 8px; background: var(--border); border-radius: 10px; overflow: hidden; }
         .phase-bar-fill { height: 100%; background: linear-gradient(90deg, var(--success), #34d399); border-radius: 10px; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
         
-        .detail-header { background: linear-gradient(135deg, var(--primary), #1e3a5f); color: white; padding: 24px; margin: -20px -20px 24px -20px; }
+        .detail-header { background: linear-gradient(135deg, var(--primary), #1e3a5f); color: white; padding: 24px 20px; margin: -22px -20px 24px -20px; border-radius: 0 0 var(--radius) var(--radius); }
         
         .back-btn {
             background: rgba(255,255,255,0.1);
@@ -545,8 +602,17 @@
         
         .back-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.1); }
         
-        .status-tabs { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
-        
+        .status-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+        }
+        .status-tabs::-webkit-scrollbar { display: none; }
+
         .status-tab {
             padding: 10px 18px;
             border: 2px solid var(--border);
@@ -555,16 +621,19 @@
             font-weight: 600;
             cursor: pointer;
             background: white;
-            transition: all 0.3s;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            flex-shrink: 0;
+            transition: all 0.3s var(--ease);
         }
-        
-        .status-tab:hover { border-color: var(--secondary); transform: translateY(-2px); }
-        
+
+        .status-tab:hover { border-color: var(--brand); color: var(--brand); transform: translateY(-2px); }
+
         .status-tab.active {
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            background: linear-gradient(135deg, var(--brand), var(--brand-2));
             color: white;
             border-color: transparent;
-            box-shadow: 0 4px 15px rgba(15, 23, 42, 0.3);
+            box-shadow: var(--shadow-brand);
         }
         
         .hidden { display: none !important; }
@@ -669,7 +738,7 @@
         /* Toast Notification */
         .toast {
             position: fixed;
-            bottom: 100px;
+            bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 24px);
             left: 50%;
             transform: translateX(-50%);
             background: var(--primary);
@@ -701,14 +770,6 @@
             </div>
         </div>
     </header>
-    
-    <nav class="nav">
-        <button class="nav-btn active" data-section="dashboard">🏠 Dashboard</button>
-        <button class="nav-btn" data-section="projects">📋 Projects</button>
-        <button class="nav-btn admin-only" data-section="master">⚙️ Master</button>
-        <button class="nav-btn admin-only" data-section="cleanup">🧹 Cleanup</button>
-        <button class="nav-btn" data-section="settings">👤 Settings</button>
-    </nav>
     
     <main class="main">
         <section id="loginSection" class="section active">
@@ -787,21 +848,13 @@
             <div id="projectsList"></div>
         </section>
         
-        <section id="cleanupSection" class="section">
-            <div class="card">
-                <div class="card-header"><span class="card-icon">🧹</span><h3 class="card-title">Cleanup Orphaned Files</h3></div>
-                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">Remove files in uploads folder that are no longer linked to any project in the database.</p>
-                <button class="btn btn-secondary btn-block" onclick="loadOrphanedFiles()">🔍 Scan for Orphaned Files</button>
-                <div id="orphanedFilesList" style="margin-top: 16px;"></div>
-            </div>
-        </section>
-        
         <section id="masterSection" class="section">
             <div class="status-tabs">
                 <button class="status-tab active" data-tab="divisions">Divisions</button>
                 <button class="status-tab" data-tab="users">Users</button>
                 <button class="status-tab" data-tab="pending">⏳ Pending</button>
                 <button class="status-tab" data-tab="audit">📋 Audit Log</button>
+                <button class="status-tab" data-tab="cleanup">🧹 Cleanup</button>
             </div>
             <div id="divisionsTab">
                 <button class="btn btn-secondary btn-block mb-2" onclick="showAddDivision()">+ Add Division</button>
@@ -938,7 +991,15 @@
             </div>
         </section>
     </main>
-    
+
+    <nav class="bottom-nav" id="bottomNav">
+        <button class="tab-btn active" data-section="dashboard"><span class="tab-ico">🏠</span><span class="tab-lbl">Home</span></button>
+        <button class="tab-btn" data-section="projects"><span class="tab-ico">📋</span><span class="tab-lbl">Projects</span></button>
+        <button class="tab-fab" onclick="showModal('projectModal')" aria-label="New project" title="New project">+</button>
+        <button class="tab-btn admin-only" data-section="master"><span class="tab-ico">⚙️</span><span class="tab-lbl">Admin</span></button>
+        <button class="tab-btn" data-section="settings"><span class="tab-ico">👤</span><span class="tab-lbl">Profile</span></button>
+    </nav>
+
     <!-- Modals -->
     <div class="modal-overlay" id="projectModal">
         <div class="modal">
@@ -1130,6 +1191,7 @@
         }
         
         function applyLoginState(isLoggedIn) {
+            document.body.classList.toggle('logged-in', !!(isLoggedIn && currentUser));
             if (isLoggedIn && currentUser) {
                 // Logged in state
                 document.getElementById('userBadge').textContent = currentUser.name;
@@ -1211,6 +1273,11 @@
                     loadDivisions();
                     loadUsers();
                     loadProfile();
+                    // Restore the section from the URL hash (refresh / back-forward)
+                    const hash = location.hash.replace('#', '');
+                    if (['dashboard', 'projects', 'master', 'settings'].includes(hash)) {
+                        showSection(hash, { fromHash: true });
+                    }
                     return;
                 } catch (e) { console.error(e); }
             }
@@ -1221,17 +1288,35 @@
             if (currentUser.role !== 'admin') document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
         }
         
-        document.querySelectorAll('.nav-btn').forEach(btn => { btn.addEventListener('click', () => showSection(btn.dataset.section)); });
-        document.querySelectorAll('.status-tab').forEach(tab => { tab.addEventListener('click', () => switchTab(tab.dataset.tab)); });
-        
-        function showSection(section) {
+        document.querySelectorAll('.tab-btn').forEach(btn => { btn.addEventListener('click', () => showSection(btn.dataset.section)); });
+        document.querySelectorAll('#projectDetailSection .status-tab').forEach(tab => { tab.addEventListener('click', () => switchTab(tab.dataset.tab)); });
+
+        // Top-level sections reachable from the bottom nav (used for hash routing)
+        const NAV_SECTIONS = ['dashboard', 'projects', 'master', 'settings'];
+
+        function showSection(section, opts = {}) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.getElementById(section + 'Section').classList.add('active');
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.querySelector(`.nav-btn[data-section="${section}"]`)?.classList.add('active');
+            // Highlight matching bottom-nav tab (projectDetail keeps Projects lit)
+            const navTarget = section === 'projectDetail' ? 'projects' : section;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector(`.tab-btn[data-section="${navTarget}"]`)?.classList.add('active');
+            window.scrollTo({ top: 0, behavior: opts.fromHash ? 'auto' : 'smooth' });
+            // Keep the URL hash in sync so the back button & refresh work
+            if (!opts.fromHash && NAV_SECTIONS.includes(section) && location.hash !== '#' + section) {
+                history.pushState(null, '', '#' + section);
+            }
             if (section === 'projects') loadProjects();
             if (section === 'master') { loadDivisions(); loadUsers(); }
         }
+
+        // Back button / manual hash change → navigate to that section
+        window.addEventListener('hashchange', () => {
+            if (!currentUser) return;
+            const s = location.hash.replace('#', '');
+            if (NAV_SECTIONS.includes(s)) showSection(s, { fromHash: true });
+            else if (!s) showSection('dashboard', { fromHash: true });
+        });
         
         function switchTab(tabId) {
             document.querySelectorAll('#projectDetailSection .status-tab').forEach(t => t.classList.remove('active'));
@@ -2012,10 +2097,12 @@
                 document.getElementById('usersTab').classList.add('hidden');
                 document.getElementById('auditTab').classList.add('hidden');
                 document.getElementById('pendingTab').classList.add('hidden');
+                document.getElementById('cleanupTab').classList.add('hidden');
                 if (tab.dataset.tab === 'divisions') { document.getElementById('divisionsTab').classList.remove('hidden'); }
                 else if (tab.dataset.tab === 'users') { document.getElementById('usersTab').classList.remove('hidden'); }
                 else if (tab.dataset.tab === 'audit') { document.getElementById('auditTab').classList.remove('hidden'); loadAudit(); }
                 else if (tab.dataset.tab === 'pending') { document.getElementById('pendingTab').classList.remove('hidden'); loadPending(); }
+                else if (tab.dataset.tab === 'cleanup') { document.getElementById('cleanupTab').classList.remove('hidden'); }
             });
         });
         
