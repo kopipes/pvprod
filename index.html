@@ -509,42 +509,49 @@
         .empty-state h4 { font-size: 18px; font-weight: 700; margin-bottom: 8px; color: var(--text-primary); }
         .empty-state p { font-size: 14px; }
         
-        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-        
-        .stat-card {
+        /* Compact single-row stat strip */
+        .stat-strip {
+            display: flex;
             background: var(--card);
-            border-radius: var(--radius);
-            padding: 22px 20px;
-            text-align: center;
-            box-shadow: var(--shadow-md);
             border: 1px solid var(--border);
-            transition: transform 0.3s var(--ease), box-shadow 0.3s ease;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+            margin-bottom: 8px;
         }
 
-        .stat-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
-        
-        .stat-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 12px;
-            font-size: 22px;
+        .stat-strip .stat {
+            flex: 1;
+            min-width: 0;
+            text-align: center;
+            padding: 14px 6px;
+            position: relative;
         }
-        
+
+        .stat-strip .stat + .stat::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 22%;
+            height: 56%;
+            width: 1px;
+            background: var(--border);
+        }
+
+        .stat-strip .stat-ic { font-size: 15px; line-height: 1; display: block; margin-bottom: 4px; }
+
         .stat-value {
-            font-size: 34px;
+            font-size: 24px;
             font-weight: 800;
-            letter-spacing: -1px;
+            letter-spacing: -0.5px;
+            line-height: 1.1;
             background: linear-gradient(135deg, var(--brand), var(--secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            white-space: nowrap;
         }
-        
-        .stat-label { font-size: 12px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+
+        .stat-label { font-size: 10px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; margin-top: 3px; }
         
         .project-card {
             background: var(--card);
@@ -803,27 +810,11 @@
                 <p>Ready to manage your production projects</p>
             </div>
             
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, var(--secondary), #60a5fa); color: white;">📋</div>
-                    <div class="stat-value" id="statProjects">0</div>
-                    <div class="stat-label">Total Projects</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, var(--accent), #fb923c); color: white;">⏳</div>
-                    <div class="stat-value" id="statActive">0</div>
-                    <div class="stat-label">Active</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, var(--success), #34d399); color: white;">📷</div>
-                    <div class="stat-value" id="statPhotos">0</div>
-                    <div class="stat-label">Photos</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, var(--warning), #facc15); color: white;">✅</div>
-                    <div class="stat-value" id="statChecklist">0</div>
-                    <div class="stat-label">Checklist Done</div>
-                </div>
+            <div class="stat-strip">
+                <div class="stat"><span class="stat-ic">📋</span><div class="stat-value" id="statProjects">0</div><div class="stat-label">Projects</div></div>
+                <div class="stat"><span class="stat-ic">⏳</span><div class="stat-value" id="statActive">0</div><div class="stat-label">Active</div></div>
+                <div class="stat"><span class="stat-ic">📷</span><div class="stat-value" id="statPhotos">0</div><div class="stat-label">Photos</div></div>
+                <div class="stat"><span class="stat-ic">✅</span><div class="stat-value" id="statChecklist">0</div><div class="stat-label">Done</div></div>
             </div>
             
         <h4 class="section-title mt-3">Recent Projects</h4>
@@ -893,7 +884,7 @@
         <section id="projectDetailSection" class="section">
             <div class="detail-header">
                 <div class="flex">
-                    <button class="back-btn" onclick="showSection('projects')">←</button>
+                    <button class="back-btn" onclick="goBackFromDetail()">←</button>
                     <div>
                         <h2 id="detailProjectName" style="font-size: 20px; font-weight: 800;">Project Name</h2>
                         <div id="detailProjectClient" style="opacity: 0.7; font-size: 14px;">Client Name</div>
@@ -1510,7 +1501,7 @@
                 if (filtered.length === 0) {
                     container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><h4>No Projects Found</h4><p>Try adjusting your filters or create a new project</p></div>';
                 } else {
-                    container.innerHTML = filtered.map(p => `<div class="project-card" data-status="${p.status}"><div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 10;"><div onclick="viewProject('${p.id}')" style="flex: 1; cursor: pointer; pointer-events: none;"><div class="project-name">${p.name}</div><div class="project-client">${p.client}</div><div class="project-meta"><span class="meta-item">📁 ${p.division_name || 'No Division'}</span><span class="meta-item">📅 ${formatDate(p.start_date)}</span>${p.end_date ? '<span class="meta-item">→ ' + formatDate(p.end_date) + '</span>' : ''}</div></div><button id="editBtn${p.id}" onclick="event.stopPropagation(); showProjectEdit('${p.id}')" class="btn btn-secondary btn-sm" style="padding: 12px 20px; font-size: 18px; min-width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; z-index: 20;">✏️</button></div><span class="list-item-badge status-${p.status === 'pre-loading' ? 'pending' : p.status === 'completed' ? 'done' : 'progress'}">${formatStatus(p.status)}</span></div>`).join('');
+                    container.innerHTML = filtered.map(p => `<div class="project-card" data-status="${p.status}"><div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 10;"><div onclick="viewProject('${p.id}')" style="flex: 1; cursor: pointer;"><div class="project-name">${p.name}</div><div class="project-client">${p.client}</div><div class="project-meta"><span class="meta-item">📁 ${p.division_name || 'No Division'}</span><span class="meta-item">📅 ${formatDate(p.start_date)}</span>${p.end_date ? '<span class="meta-item">→ ' + formatDate(p.end_date) + '</span>' : ''}</div></div><button id="editBtn${p.id}" onclick="event.stopPropagation(); showProjectEdit('${p.id}')" class="btn btn-secondary btn-sm" style="padding: 12px 20px; font-size: 18px; min-width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; z-index: 20;">✏️</button></div><span class="list-item-badge status-${p.status === 'pre-loading' ? 'pending' : p.status === 'completed' ? 'done' : 'progress'}">${formatStatus(p.status)}</span></div>`).join('');
                 
                 document.querySelectorAll('.edit-project-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
@@ -1538,7 +1529,16 @@
             } catch (e) { alert('Error creating project'); }
         }
         
+        // Remember where the user opened the project from, so the back arrow returns there
+        let detailReturnSection = 'projects';
+        function goBackFromDetail() { showSection(detailReturnSection || 'projects'); }
+
         async function viewProject(id) {
+            // Only capture origin on a fresh open (not when refreshing the detail after an edit)
+            const active = document.querySelector('.section.active');
+            if (active && (active.id === 'dashboardSection' || active.id === 'projectsSection')) {
+                detailReturnSection = active.id.replace('Section', '');
+            }
             try {
                 currentProject = await fetchAPI('/api/projects/' + id);
                 document.getElementById('detailProjectName').textContent = currentProject.name;
