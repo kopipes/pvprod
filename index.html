@@ -602,6 +602,17 @@
         .pc-main .project-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .pc-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         .pc-row .list-item-badge { margin-top: 0; flex-shrink: 0; }
+
+        /* Responsive 2-column grid for card lists (1 column on narrow phones) */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 10px;
+            align-items: start;
+        }
+        .card-grid .project-card,
+        .card-grid .list-item { margin-bottom: 0; }
+        .card-grid .empty-state { grid-column: 1 / -1; }
         .meta-item { display: flex; align-items: center; gap: 6px; font-weight: 500; }
         
         .phase-progress { display: flex; gap: 6px; margin: 20px 0; }
@@ -834,7 +845,7 @@
             </div>
             
         <h4 class="section-title mt-3">Recent Projects</h4>
-        <div id="recentProjects"></div>
+        <div id="recentProjects" class="card-grid"></div>
         <div id="recentProjectsPagination" style="display: flex; justify-content: center; gap: 8px; margin-top: 16px; flex-wrap: wrap;"></div>
         </section>
         
@@ -852,7 +863,7 @@
                 </select>
             </div>
             <button class="btn btn-primary btn-block mb-2" onclick="showModal('projectModal')">+ Create New Project</button>
-            <div id="projectsList"></div>
+            <div id="projectsList" class="card-grid"></div>
         </section>
         
         <section id="masterSection" class="section">
@@ -865,12 +876,12 @@
             </div>
             <div id="divisionsTab">
                 <button class="btn btn-secondary btn-block mb-2" onclick="showAddDivision()">+ Add Division</button>
-                <div id="divisionsList"></div>
+                <div id="divisionsList" class="card-grid"></div>
             </div>
             <div id="usersTab" class="hidden">
                 <div class="form-group" style="margin-bottom: 12px;"><input type="text" class="form-control" id="userSearchInput" placeholder="Search users..." oninput="filterUsers()"></div>
                 <button class="btn btn-secondary btn-block mb-2" onclick="showModal('userModal')">+ Add User</button>
-                <div id="usersList"></div>
+                <div id="usersList" class="card-grid"></div>
             </div>
             <div id="auditTab" class="hidden">
                 <div class="form-group" style="margin-bottom: 12px;"><input type="text" class="form-control" id="auditSearchInput" placeholder="Search audit logs..." oninput="searchAudit()"></div>
