@@ -677,6 +677,11 @@
         
         .filter-row { display: flex; gap: 12px; margin-bottom: 20px; }
         .filter-row .form-control { flex: 1; padding: 12px 16px; }
+
+        .search-filter-row { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+        .search-filter-row .form-control { padding: 12px 16px; }
+        .search-filter-row .search-box { flex: 2 1 240px; }   /* search grows, min 240px */
+        .search-filter-row .filter-sel { flex: 1 1 130px; }   /* filters to the right */
         
         /* User Avatar */
         .user-avatar {
@@ -818,11 +823,12 @@
         </section>
         
         <section id="projectsSection" class="section">
-            <div class="filter-row">
-                <select class="form-control" id="filterDivision" onchange="loadProjects()">
+            <div class="search-filter-row">
+                <input type="text" id="projectSearchInput" class="form-control search-box" placeholder="🔍 Search projects..." oninput="applyProjectFilters()">
+                <select class="form-control filter-sel" id="filterDivision" onchange="applyProjectFilters()">
                     <option value="">All Divisions</option>
                 </select>
-                <select class="form-control" id="filterStatus" onchange="loadProjects()">
+                <select class="form-control filter-sel" id="filterStatus" onchange="applyProjectFilters()">
                     <option value="">All Status</option>
                     <option value="pre-loading">Pre-Loading</option>
                     <option value="loading-in">Loading In</option>
@@ -1163,7 +1169,8 @@
         let recentProjectsPage = 1;
         const recentProjectsPerPage = 10;
 
-        // Projects page pagination
+        // Projects page pagination + search/filter
+        let projectsRaw = [];
         let projectsAll = [];
         let projectsPage = 1;
         const projectsPerPage = 10;
@@ -1477,16 +1484,26 @@
         
         async function loadProjects() {
             try {
-                const projects = await fetchAPI('/api/projects');
-                const divisionFilter = document.getElementById('filterDivision').value;
-                const statusFilter = document.getElementById('filterStatus').value;
-                let filtered = projects;
-                if (divisionFilter) filtered = filtered.filter(p => p.division_id == divisionFilter);
-                if (statusFilter) filtered = filtered.filter(p => p.status === statusFilter);
-                projectsAll = filtered;
-                projectsPage = 1;
-                renderProjects();
+                projectsRaw = await fetchAPI('/api/projects');
+                applyProjectFilters();
             } catch (e) { console.error(e); }
+        }
+
+        // Filter the cached projects by search text + division + status (no refetch)
+        function applyProjectFilters() {
+            const search = (document.getElementById('projectSearchInput').value || '').toLowerCase().trim();
+            const divisionFilter = document.getElementById('filterDivision').value;
+            const statusFilter = document.getElementById('filterStatus').value;
+            let filtered = projectsRaw;
+            if (divisionFilter) filtered = filtered.filter(p => p.division_id == divisionFilter);
+            if (statusFilter) filtered = filtered.filter(p => p.status === statusFilter);
+            if (search) filtered = filtered.filter(p =>
+                [p.name, p.client, p.vendor, p.location, p.division_name]
+                    .some(v => (v || '').toLowerCase().includes(search))
+            );
+            projectsAll = filtered;
+            projectsPage = 1;
+            renderProjects();
         }
 
         function renderProjects() {
