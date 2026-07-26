@@ -6,3 +6,4 @@ uploads/
 # Deployment secrets — infra host/SSH details, never commit
 DEPLOY.local.md
 *.local.md
+.integration_key

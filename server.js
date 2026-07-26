@@ -844,6 +844,39 @@ app.get('/api/stats', (req, res) => {
     }
 });
 
+// ─── Read-only integration export for 2ndbrain (keyed) ───────────────────────
+// Key from env INTERNAL_API_KEY, or a gitignored .integration_key file.
+const INTEGRATION_KEY = (() => {
+    if (process.env.INTERNAL_API_KEY) return process.env.INTERNAL_API_KEY.trim();
+    try { return fs.readFileSync(path.join(__dirname, '.integration_key'), 'utf8').trim(); } catch { return ''; }
+})();
+function safeEq(a, b) {
+    const ab = Buffer.from(String(a)), bb = Buffer.from(String(b));
+    return ab.length === bb.length && crypto.timingSafeEqual(ab, bb);
+}
+function requireIntegrationKey(req, res, next) {
+    if (!INTEGRATION_KEY) return res.status(503).json({ error: 'Integration disabled (no key configured)' });
+    const header = String(req.header('x-internal-api-key') || '').trim();
+    const bearer = String(req.header('authorization') || '').replace(/^Bearer\s+/i, '').trim();
+    if ((header && safeEq(header, INTEGRATION_KEY)) || (bearer && safeEq(bearer, INTEGRATION_KEY))) return next();
+    return res.status(401).json({ error: 'Unauthorized' });
+}
+app.get('/api/integration/export', requireIntegrationKey, (req, res) => {
+    try {
+        const dropPw = (rows) => rows.map((r) => { const o = { ...r }; delete o.password; return o; });
+        res.json({
+            app: 'pvproc',
+            exportDate: new Date().toISOString(),
+            divisions: db.prepare('SELECT * FROM divisions').all(),
+            users: dropPw(db.prepare('SELECT * FROM users').all()),   // password NEVER leaves the app
+            projects: db.prepare('SELECT * FROM projects').all(),
+            checklist_items: db.prepare('SELECT * FROM checklist_items').all(),
+            photos: db.prepare('SELECT id, project_id, type, created_at FROM photos').all(), // metadata only
+            project_members: db.prepare('SELECT * FROM project_members').all(),
+        });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // Serve index.html for all other routes
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
