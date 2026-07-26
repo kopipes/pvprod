@@ -832,6 +832,7 @@
             </div>
             <button class="btn btn-primary btn-block mb-2" onclick="showModal('projectModal')">+ Create New Project</button>
             <div id="projectsList" class="card-grid"></div>
+            <div id="projectsPagination" style="display: flex; justify-content: center; gap: 8px; margin-top: 16px; flex-wrap: wrap;"></div>
         </section>
         
         <section id="masterSection" class="section">
@@ -1104,7 +1105,7 @@
         </div>
     </div>
     
-    <div class="modal-overlay" id="photoViewModal" onclick="if(event.target.id==='photoViewModal' || event.target.id==='photoViewClose')hideModal('photoViewModal')">
+    <div class="modal-overlay" id="photoViewModal" onclick="if(!event.target.closest('img, button')) hideModal('photoViewModal')">
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; padding: 60px 20px;">
             <div style="position: relative; max-width: 100%; text-align: center;">
                 <button class="modal-close" id="photoViewClose" onclick="hideModal('photoViewModal')" style="position: absolute; top: -50px; right: 0; z-index: 10;">×</button>
@@ -1160,7 +1161,12 @@
         // Recent projects pagination
         let recentProjectsAll = [];
         let recentProjectsPage = 1;
-        const recentProjectsPerPage = 5;
+        const recentProjectsPerPage = 10;
+
+        // Projects page pagination
+        let projectsAll = [];
+        let projectsPage = 1;
+        const projectsPerPage = 10;
         
         async function fetchAPI(url, options = {}) {
             const response = await fetch(API + url, options);
@@ -1477,21 +1483,48 @@
                 let filtered = projects;
                 if (divisionFilter) filtered = filtered.filter(p => p.division_id == divisionFilter);
                 if (statusFilter) filtered = filtered.filter(p => p.status === statusFilter);
-                
-                const container = document.getElementById('projectsList');
-                if (filtered.length === 0) {
-                    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><h4>No Projects Found</h4><p>Try adjusting your filters or create a new project</p></div>';
-                } else {
-                    container.innerHTML = filtered.map(p => `<div class="project-card" data-status="${p.status}"><div class="pc-row"><div class="pc-main" onclick="viewProject('${p.id}')" style="cursor: pointer;"><div class="pc-head"><span class="project-name">${p.name}</span><span class="list-item-badge status-${p.status === 'pre-loading' ? 'pending' : p.status === 'completed' ? 'done' : 'progress'}">${formatStatus(p.status)}</span></div><div class="project-client">${p.client || ''}</div><div class="project-meta"><span class="meta-item">📁 ${p.division_name || 'No Division'}</span><span class="meta-item">📅 ${formatDate(p.start_date)}</span>${p.end_date ? '<span class="meta-item">→ ' + formatDate(p.end_date) + '</span>' : ''}</div></div><button onclick="event.stopPropagation(); showProjectEdit('${p.id}')" class="icon-btn" title="Edit project">✏️</button></div></div>`).join('');
-                
-                document.querySelectorAll('.edit-project-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        showProjectEdit(btn.dataset.id);
-                    });
-                });
-                }
+                projectsAll = filtered;
+                projectsPage = 1;
+                renderProjects();
             } catch (e) { console.error(e); }
+        }
+
+        function renderProjects() {
+            const container = document.getElementById('projectsList');
+            const totalPages = Math.ceil(projectsAll.length / projectsPerPage);
+            if (projectsAll.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><h4>No Projects Found</h4><p>Try adjusting your filters or create a new project</p></div>';
+                document.getElementById('projectsPagination').innerHTML = '';
+                return;
+            }
+            const start = (projectsPage - 1) * projectsPerPage;
+            const pageProjects = projectsAll.slice(start, start + projectsPerPage);
+            container.innerHTML = pageProjects.map(p => `<div class="project-card" data-status="${p.status}"><div class="pc-row"><div class="pc-main" onclick="viewProject('${p.id}')" style="cursor: pointer;"><div class="pc-head"><span class="project-name">${p.name}</span><span class="list-item-badge status-${p.status === 'pre-loading' ? 'pending' : p.status === 'completed' ? 'done' : 'progress'}">${formatStatus(p.status)}</span></div><div class="project-client">${p.client || ''}</div><div class="project-meta"><span class="meta-item">📁 ${p.division_name || 'No Division'}</span><span class="meta-item">📅 ${formatDate(p.start_date)}</span>${p.end_date ? '<span class="meta-item">→ ' + formatDate(p.end_date) + '</span>' : ''}</div></div><button onclick="event.stopPropagation(); showProjectEdit('${p.id}')" class="icon-btn" title="Edit project">✏️</button></div></div>`).join('');
+            renderProjectsPagination(totalPages);
+        }
+
+        function renderProjectsPagination(totalPages) {
+            const container = document.getElementById('projectsPagination');
+            if (totalPages <= 1) { container.innerHTML = ''; return; }
+            let html = '';
+            html += `<button class="btn btn-outline btn-sm" onclick="goToProjectsPage(${projectsPage - 1})" ${projectsPage === 1 ? 'disabled' : ''}>← Prev</button>`;
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= projectsPage - 1 && i <= projectsPage + 1)) {
+                    html += `<button class="btn btn-sm ${i === projectsPage ? 'btn-secondary' : 'btn-outline'}" onclick="goToProjectsPage(${i})">${i}</button>`;
+                } else if (i === projectsPage - 2 || i === projectsPage + 2) {
+                    html += `<span style="padding: 8px;">...</span>`;
+                }
+            }
+            html += `<button class="btn btn-outline btn-sm" onclick="goToProjectsPage(${projectsPage + 1})" ${projectsPage === totalPages ? 'disabled' : ''}>Next →</button>`;
+            container.innerHTML = html;
+        }
+
+        function goToProjectsPage(page) {
+            const totalPages = Math.ceil(projectsAll.length / projectsPerPage);
+            if (page < 1 || page > totalPages) return;
+            projectsPage = page;
+            renderProjects();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
         
         async function saveProject() {
