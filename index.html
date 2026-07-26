@@ -1346,7 +1346,7 @@
                 container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><h4>No Projects Yet</h4><p>Create your first project to get started</p></div>';
                 document.getElementById('recentProjectsPagination').innerHTML = '';
             } else {
-                container.innerHTML = pageProjects.map(p => `<div class="project-card" data-status="${p.status}" onclick="viewProject('${p.id}')"><div class="pc-row"><div class="pc-main"><div class="project-name">${p.name}</div><div class="project-client">${p.client || ''}</div><div class="pc-updated">🕒 Updated ${timeAgo(p.last_activity || p.created_at)}</div></div><span class="list-item-badge status-${p.status === 'pre-loading' ? 'pending' : p.status === 'completed' ? 'done' : 'progress'}">${formatStatus(p.status)}</span></div></div>`).join('');
+                container.innerHTML = pageProjects.map(p => `<div class="project-card" data-status="${p.status}" onclick="viewProject('${p.id}')"><div class="pc-row"><div class="pc-main"><div class="project-name">${escapeHtml(p.name)}</div><div class="project-client">${escapeHtml(p.client)}</div><div class="pc-updated">🕒 Updated ${timeAgo(p.last_activity || p.created_at)}</div></div><span class="list-item-badge status-${p.status === 'pre-loading' ? 'pending' : p.status === 'completed' ? 'done' : 'progress'}">${formatStatus(p.status)}</span></div></div>`).join('');
                 renderRecentProjectsPagination(totalPages);
             }
         }
@@ -1377,20 +1377,22 @@
             renderRecentProjects();
         }
         
+        let allDivisions = [];
         async function loadDivisions() {
             try {
                 const divisions = await fetchAPI('/api/divisions');
+                allDivisions = divisions;
                 ['filterDivision', 'projectDivision', 'userDivision'].forEach(id => {
                     const select = document.getElementById(id);
                     select.innerHTML = id === 'filterDivision' ? '<option value="">All Divisions</option>' : '<option value="">-- Select Division --</option>';
-                    divisions.forEach(d => { select.innerHTML += `<option value="${d.id}">${d.name}</option>`; });
+                    divisions.forEach(d => { select.innerHTML += `<option value="${d.id}">${escapeHtml(d.name)}</option>`; });
                 });
                 
                 const container = document.getElementById('divisionsList');
                 if (divisions.length === 0) {
                     container.innerHTML = '<div class="empty-state"><p>No divisions yet</p></div>';
                 } else {
-                    container.innerHTML = divisions.map(d => `<div class="list-item"><div class="li-row"><div class="li-main"><div class="list-item-title">${d.name}</div><div class="list-item-sub">Created ${formatDate(d.created_at)}</div></div>${currentUser.role === 'admin' ? `<div class="li-actions"><button class="icon-btn" title="Edit" onclick="showEditDivision(${d.id}, '${d.name}')">✏️</button><button class="icon-btn danger" title="Delete" onclick="deleteDivision(${d.id})">🗑️</button></div>` : ''}</div></div>`).join('');
+                    container.innerHTML = divisions.map(d => `<div class="list-item"><div class="li-row"><div class="li-main"><div class="list-item-title">${escapeHtml(d.name)}</div><div class="list-item-sub">Created ${formatDate(d.created_at)}</div></div>${currentUser.role === 'admin' ? `<div class="li-actions"><button class="icon-btn" title="Edit" onclick="showEditDivision(${d.id})">✏️</button><button class="icon-btn danger" title="Delete" onclick="deleteDivision(${d.id})">🗑️</button></div>` : ''}</div></div>`).join('');
                 }
             } catch (e) { console.error(e); }
         }
@@ -1410,7 +1412,7 @@
             if (users.length === 0) {
                 container.innerHTML = '<div class="empty-state"><p>No users found</p></div>';
             } else {
-                container.innerHTML = users.map(u => `<div class="list-item"><div class="li-row"><div class="li-main"><div class="list-item-title">${displayName(u)}</div><div class="list-item-sub"><span class="role-badge role-${u.role}">${u.role}</span> ${u.email || ''}${u.phone ? ' • ' + u.phone : ''}</div></div>${currentUser.role === 'admin' ? `<div class="li-actions"><button class="icon-btn" title="Edit" onclick="showEditUser(${u.id})">✏️</button><button class="icon-btn danger" title="Delete" onclick="deleteUser(${u.id})">🗑️</button></div>` : ''}</div></div>`).join('');
+                container.innerHTML = users.map(u => `<div class="list-item"><div class="li-row"><div class="li-main"><div class="list-item-title">${escapeHtml(displayName(u))}</div><div class="list-item-sub"><span class="role-badge role-${escapeHtml(u.role)}">${escapeHtml(u.role)}</span> ${escapeHtml(u.email)}${u.phone ? ' • ' + escapeHtml(u.phone) : ''}</div></div>${currentUser.role === 'admin' ? `<div class="li-actions"><button class="icon-btn" title="Edit" onclick="showEditUser(${u.id})">✏️</button><button class="icon-btn danger" title="Delete" onclick="deleteUser(${u.id})">🗑️</button></div>` : ''}</div></div>`).join('');
             }
         }
         
@@ -1458,7 +1460,7 @@
         
         function loadProfile() {
             if (!currentUser) return;
-            document.getElementById('profileInfo').innerHTML = `<div style="text-align: center; margin-bottom: 20px;"><div class="user-avatar" style="width: 80px; height: 80px; font-size: 32px; margin: 0 auto 12px;">${displayName(currentUser).charAt(0).toUpperCase()}</div><h4 style="font-size: 18px; font-weight: 700;">${displayName(currentUser)}</h4><span class="role-badge role-${currentUser.role}">${currentUser.role}</span>${currentUser.division_name ? '<p style="margin-top: 8px; color: var(--text-secondary);">' + currentUser.division_name + '</p>' : ''}</div><button class="btn btn-secondary btn-block" onclick="editProfile()">Edit Profile</button>`;
+            document.getElementById('profileInfo').innerHTML = `<div style="text-align: center; margin-bottom: 20px;"><div class="user-avatar" style="width: 80px; height: 80px; font-size: 32px; margin: 0 auto 12px;">${displayName(currentUser).charAt(0).toUpperCase()}</div><h4 style="font-size: 18px; font-weight: 700;">${escapeHtml(displayName(currentUser))}</h4><span class="role-badge role-${escapeHtml(currentUser.role)}">${escapeHtml(currentUser.role)}</span>${currentUser.division_name ? '<p style="margin-top: 8px; color: var(--text-secondary);">' + escapeHtml(currentUser.division_name) + '</p>' : ''}</div><button class="btn btn-secondary btn-block" onclick="editProfile()">Edit Profile</button>`;
         }
         
         function editProfile() {
@@ -1516,7 +1518,7 @@
             }
             const start = (projectsPage - 1) * projectsPerPage;
             const pageProjects = projectsAll.slice(start, start + projectsPerPage);
-            container.innerHTML = pageProjects.map(p => `<div class="project-card" data-status="${p.status}"><div class="pc-row"><div class="pc-main" onclick="viewProject('${p.id}')" style="cursor: pointer;"><div class="pc-head"><span class="project-name">${p.name}</span><span class="list-item-badge status-${p.status === 'pre-loading' ? 'pending' : p.status === 'completed' ? 'done' : 'progress'}">${formatStatus(p.status)}</span></div><div class="project-client">${p.client || ''}</div><div class="project-meta"><span class="meta-item">📁 ${p.division_name || 'No Division'}</span><span class="meta-item">📅 ${formatDate(p.start_date)}</span>${p.end_date ? '<span class="meta-item">→ ' + formatDate(p.end_date) + '</span>' : ''}</div></div><button onclick="event.stopPropagation(); showProjectEdit('${p.id}')" class="icon-btn" title="Edit project">✏️</button></div></div>`).join('');
+            container.innerHTML = pageProjects.map(p => `<div class="project-card" data-status="${p.status}"><div class="pc-row"><div class="pc-main" onclick="viewProject('${p.id}')" style="cursor: pointer;"><div class="pc-head"><span class="project-name">${escapeHtml(p.name)}</span><span class="list-item-badge status-${p.status === 'pre-loading' ? 'pending' : p.status === 'completed' ? 'done' : 'progress'}">${formatStatus(p.status)}</span></div><div class="project-client">${escapeHtml(p.client)}</div><div class="project-meta"><span class="meta-item">📁 ${escapeHtml(p.division_name || 'No Division')}</span><span class="meta-item">📅 ${formatDate(p.start_date)}</span>${p.end_date ? '<span class="meta-item">→ ' + formatDate(p.end_date) + '</span>' : ''}</div></div><button onclick="event.stopPropagation(); showProjectEdit('${p.id}')" class="icon-btn" title="Edit project">✏️</button></div></div>`).join('');
             renderProjectsPagination(totalPages);
         }
 
@@ -1638,7 +1640,7 @@
             if (members.length === 0) {
                 container.innerHTML = '<div style="color: var(--text-secondary); font-size: 13px;">No members yet</div>';
             } else {
-                container.innerHTML = members.map(m => `<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border);"><div><strong>${m.name}</strong> <span class="role-badge role-${m.role}">${m.role}</span></div>${(currentUser.role === 'admin' || currentUser.role === 'manager') ? `<button class="btn btn-outline btn-sm" onclick="removeProjectMember(${m.id})" style="padding: 4px 8px; font-size: 11px; color: var(--error);">×</button>` : ''}</div>`).join('');
+                container.innerHTML = members.map(m => `<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border);"><div><strong>${escapeHtml(displayName(m))}</strong> <span class="role-badge role-${escapeHtml(m.role)}">${escapeHtml(m.role)}</span></div>${(currentUser.role === 'admin' || currentUser.role === 'manager') ? `<button class="btn btn-outline btn-sm" onclick="removeProjectMember(${m.id})" style="padding: 4px 8px; font-size: 11px; color: var(--error);">×</button>` : ''}</div>`).join('');
             }
         }
         
@@ -1740,7 +1742,7 @@
                 }, {});
                 container.innerHTML = Object.keys(grouped).map(date => {
                     const batchTitle = grouped[date][0].note || '';
-                    return `<div style="margin-bottom: 16px;"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;"><div class="photo-date">📅 <span class="date-badge">${formatDate(date)}</span></div>${batchTitle ? `<div style="background: linear-gradient(135deg, var(--secondary), #60a5fa); color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;">${batchTitle}</div>` : ''}</div><div class="photo-grid">${grouped[date].map(photo => `<div class="photo-item" onclick="viewPhoto('${photo.id}')"><img src="${photo.filepath}" alt=""></div>`).join('')}</div></div>`;
+                    return `<div style="margin-bottom: 16px;"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;"><div class="photo-date">📅 <span class="date-badge">${formatDate(date)}</span></div>${batchTitle ? `<div style="background: linear-gradient(135deg, var(--secondary), #60a5fa); color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;">${escapeHtml(batchTitle)}</div>` : ''}</div><div class="photo-grid">${grouped[date].map(photo => `<div class="photo-item" onclick="viewPhoto('${photo.id}')"><img src="${escapeHtml(photo.filepath)}" alt="" loading="lazy" decoding="async"></div>`).join('')}</div></div>`;
                 }).join('');
             }
         }
@@ -1750,7 +1752,7 @@
             if (items.length === 0) {
                 container.innerHTML = '<div class="empty-state" style="padding: 30px;"><p>No items yet</p></div>';
             } else {
-                container.innerHTML = items.map(item => `<div class="checklist-item ${item.checked ? 'checked' : ''}"><div class="checklist-checkbox" onclick="toggleChecklist('${item.id}', '${type}')">${item.checked ? '✓' : ''}</div><div class="checklist-content" onclick="toggleChecklist('${item.id}', '${type}')"><div class="checklist-title">${item.text}</div><div class="checklist-meta">Added ${formatDate(item.created_at)}</div></div><button class="btn btn-outline btn-sm" onclick="editChecklistItem('${item.id}', '${type}')" style="padding: 6px 12px; margin-left: auto; align-self: center;">✏️</button></div>`).join('');
+                container.innerHTML = items.map(item => `<div class="checklist-item ${item.checked ? 'checked' : ''}"><div class="checklist-checkbox" onclick="toggleChecklist('${item.id}', '${type}')">${item.checked ? '✓' : ''}</div><div class="checklist-content" onclick="toggleChecklist('${item.id}', '${type}')"><div class="checklist-title">${escapeHtml(item.text)}</div><div class="checklist-meta">Added ${formatDate(item.created_at)}</div></div><button class="btn btn-outline btn-sm" onclick="editChecklistItem('${item.id}', '${type}')" style="padding: 6px 12px; margin-left: auto; align-self: center;">✏️</button></div>`).join('');
             }
         }
         
@@ -1835,7 +1837,7 @@
             if (filtered.length === 0) {
                 container.innerHTML = '<div style="color: var(--text-secondary); font-size: 13px;">No users found</div>';
             } else {
-                container.innerHTML = filtered.map(u => `<div class="member-option" data-id="${u.id}" onclick="selectMember(${u.id})" style="padding: 12px; border-radius: 10px; cursor: pointer; margin-bottom: 8px; background: var(--bg); border: 2px solid var(--border); transition: all 0.2s;"><strong>${u.name}</strong> <span class="role-badge role-${u.role}">${u.role}</span></div>`).join('');
+                container.innerHTML = filtered.map(u => `<div class="member-option" data-id="${u.id}" onclick="selectMember(${u.id})" style="padding: 12px; border-radius: 10px; cursor: pointer; margin-bottom: 8px; background: var(--bg); border: 2px solid var(--border); transition: all 0.2s;"><strong>${escapeHtml(displayName(u))}</strong> <span class="role-badge role-${escapeHtml(u.role)}">${escapeHtml(u.role)}</span></div>`).join('');
             }
         }
         
@@ -2102,9 +2104,10 @@
             showModal('divisionModal');
         }
         
-        function showEditDivision(id, name) {
+        function showEditDivision(id) {
+            const div = allDivisions.find(d => d.id == id);
             editingDivisionId = id;
-            document.getElementById('divisionName').value = name;
+            document.getElementById('divisionName').value = div ? div.name : '';
             document.getElementById('divisionModalTitle').textContent = 'Edit Division';
             document.getElementById('saveDivisionBtn').textContent = 'Update Division';
             showModal('divisionModal');
@@ -2191,7 +2194,7 @@
                 if (pending.length === 0) {
                     container.innerHTML = '<div class="empty-state"><p>No pending registrations</p></div>';
                 } else {
-                    container.innerHTML = pending.map(u => `<div class="list-item"><div class="list-item-title">${u.name}</div><div class="list-item-sub">${u.email || ''} ${u.phone ? '• ' + u.phone : ''}</div><div class="list-item-sub" style="margin-top: 8px;">Registered: ${formatDate(u.created_at)}</div><div style="display: flex; gap: 8px; margin-top: 12px;"><button class="btn btn-success btn-sm" onclick="approveUser(${u.id})" style="flex: 1;">✅ Approve</button><button class="btn btn-danger btn-sm" onclick="rejectUser(${u.id})" style="flex: 1;">❌ Reject</button></div></div>`).join('');
+                    container.innerHTML = pending.map(u => `<div class="list-item"><div class="list-item-title">${escapeHtml(displayName(u))}</div><div class="list-item-sub">${escapeHtml(u.email)} ${u.phone ? '• ' + escapeHtml(u.phone) : ''}</div><div class="list-item-sub" style="margin-top: 8px;">Registered: ${formatDate(u.created_at)}</div><div style="display: flex; gap: 8px; margin-top: 12px;"><button class="btn btn-success btn-sm" onclick="approveUser(${u.id})" style="flex: 1;">✅ Approve</button><button class="btn btn-danger btn-sm" onclick="rejectUser(${u.id})" style="flex: 1;">❌ Reject</button></div></div>`).join('');
                 }
             } catch (e) { console.error(e); }
         }
@@ -2234,7 +2237,7 @@
                 container.innerHTML = '<div class="empty-state"><p>No audit logs found</p></div>';
             } else {
                 const actionColors = { CREATE: '#10b981', UPDATE: '#3b82f6', DELETE: '#ef4444', APPROVE: '#10b981', REJECT: '#ef4444' };
-                container.innerHTML = logs.map(log => `<div class="list-item" style="border-left: 4px solid ${actionColors[log.action] || '#64748b'}"><div class="list-item-title">${log.user_name || 'System'}</div><div class="list-item-sub"><span style="font-weight: 600; color: ${actionColors[log.action] || '#64748b'}">${log.action}</span> ${log.entity_type}: <strong>${log.entity_name || '-'}</strong></div><div class="list-item-sub" style="margin-top: 8px;">${log.details || ''}</div><div class="list-item-sub" style="opacity: 0.6; font-size: 11px; margin-top: 4px;">${formatDate(log.created_at)}</div></div>`).join('');
+                container.innerHTML = logs.map(log => `<div class="list-item" style="border-left: 4px solid ${actionColors[log.action] || '#64748b'}"><div class="list-item-title">${escapeHtml(log.user_name || 'System')}</div><div class="list-item-sub"><span style="font-weight: 600; color: ${actionColors[log.action] || '#64748b'}">${escapeHtml(log.action)}</span> ${escapeHtml(log.entity_type)}: <strong>${escapeHtml(log.entity_name || '-')}</strong></div><div class="list-item-sub" style="margin-top: 8px;">${escapeHtml(log.details || '')}</div><div class="list-item-sub" style="opacity: 0.6; font-size: 11px; margin-top: 4px;">${formatDate(log.created_at)}</div></div>`).join('');
             }
         }
         
@@ -2272,35 +2275,6 @@
         }
         
         let selectedOrphanedFiles = new Set();
-        
-        async function loadOrphanedFiles() {
-            try {
-                const data = await fetchAPI('/api/admin/orphaned-files');
-                const container = document.getElementById('orphanedFilesList');
-                selectedOrphanedFiles.clear();
-                
-                if (!data.orphanedFiles || data.orphanedFiles.length === 0) {
-                    container.innerHTML = '<div class="empty-state"><p>✅ No orphaned files found. Your uploads folder is clean!</p></div>';
-                    return;
-                }
-                
-                let html = `<div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;"><strong>Found ${data.count} orphaned file(s):</strong><button class="btn btn-outline btn-sm" onclick="selectAllOrphaned()">☑️ Select All</button></div>`;
-                data.orphanedFiles.forEach(f => {
-                    const sizeKB = (f.size / 1024).toFixed(1);
-                    html += `<div class="list-item" style="cursor: pointer; padding: 12px 16px;" onclick="toggleOrphanedFile('${f.filename}', this)">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <div id="check-${f.filename}" style="width: 24px; height: 24px; border: 2px solid var(--border); border-radius: 6px;"></div>
-                            <div style="flex: 1;">
-                                <div style="font-weight: 600; font-size: 14px;">${f.filename}</div>
-                                <div style="font-size: 12px; color: var(--text-secondary);">${sizeKB} KB • ${formatDate(f.created)}</div>
-                            </div>
-                        </div>
-                    </div>`;
-                });
-                html += `<button class="btn btn-danger btn-block mt-3" onclick="deleteOrphanedFiles()" id="deleteOrphanedBtn" disabled>🗑️ Delete Selected (0)</button>`;
-                container.innerHTML = html;
-            } catch (e) { alert('Error scanning files'); }
-        }
         
         function toggleOrphanedFile(filename, element) {
             const check = document.getElementById('check-' + filename);
@@ -2415,6 +2389,11 @@
             return Math.floor(mo / 12) + 'y ago';
         }
         function formatStatus(s) { return (s || '').replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()); }
+        // Escape user-controlled text before inserting into innerHTML (prevents broken markup & stored XSS)
+        function escapeHtml(v) {
+            if (v === null || v === undefined) return '';
+            return String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
         function showToast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3000); }
         
         document.addEventListener('DOMContentLoaded', checkAuth);
