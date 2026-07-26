@@ -238,11 +238,12 @@ app.delete('/api/divisions/:id', (req, res) => {
 app.get('/api/users', (req, res) => {
     try {
         const users = db.prepare(`
-            SELECT u.*, d.name as division_name 
-            FROM users u 
-            LEFT JOIN divisions d ON u.division_id = d.id 
+            SELECT u.*, d.name as division_name
+            FROM users u
+            LEFT JOIN divisions d ON u.division_id = d.id
             ORDER BY u.created_at DESC
         `).all();
+        users.forEach(u => delete u.password); // never expose password hashes
         res.json(users);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -252,11 +253,12 @@ app.get('/api/users', (req, res) => {
 app.get('/api/users/:id', (req, res) => {
     try {
         const user = db.prepare(`
-            SELECT u.*, d.name as division_name 
-            FROM users u 
-            LEFT JOIN divisions d ON u.division_id = d.id 
+            SELECT u.*, d.name as division_name
+            FROM users u
+            LEFT JOIN divisions d ON u.division_id = d.id
             WHERE u.id = ?
         `).get(req.params.id);
+        if (user) delete user.password; // never expose password hash
         res.json(user);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -675,12 +677,15 @@ app.delete('/api/admin/orphaned-files', (req, res) => {
         
         const deleted = [];
         const errors = [];
-        
+
         for (const filename of filenames) {
-            const filepath = path.join(uploadsDir, filename);
+            // Sanitize: strip any path components to prevent traversal (e.g. "../../etc/x")
+            const safeName = path.basename(String(filename));
+            const filepath = path.join(uploadsDir, safeName);
+            if (path.dirname(filepath) !== uploadsDir) { errors.push(filename); continue; }
             if (fs.existsSync(filepath)) {
                 fs.unlinkSync(filepath);
-                deleted.push(filename);
+                deleted.push(safeName);
             } else {
                 errors.push(filename);
             }
