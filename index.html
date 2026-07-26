@@ -1061,7 +1061,7 @@
         <div class="modal">
             <div class="modal-header"><h3 class="modal-title" id="uploadTitle">Upload Photos</h3><button class="modal-close" onclick="hideModal('uploadModal')">×</button></div>
             <div class="form-group"><label>Batch Title</label><input type="text" class="form-control" id="uploadBatchTitle" placeholder="e.g., Morning Survey, Site Layout, etc."></div>
-            <div class="upload-area" onclick="document.getElementById('fileInput').click()"><div class="upload-icon">📷</div><h4>Tap to select photos</h4><p>Max 20 photos per upload</p><p style="color: var(--accent); font-weight: 600; margin-top: 8px;">⚠️ Max file size: 10MB</p></div>
+            <div class="upload-area" onclick="document.getElementById('fileInput').click()"><div class="upload-icon">📷</div><h4>Tap to select photos</h4><p>Max 20 photos per upload</p><p style="color: var(--success); font-weight: 600; margin-top: 8px;">✨ Large photos are optimized automatically</p></div>
             <input type="file" id="fileInput" multiple accept="image/*,.heic,.heif" style="display: none;" onchange="handleFiles(this.files)">
             <div id="previewFiles" class="photo-grid mt-3"></div>
             <div class="form-group mt-3"><label>Description (optional)</label><textarea class="form-control" id="uploadNote" rows="2" placeholder="Add a description..."></textarea></div>
@@ -1910,34 +1910,68 @@
             showModal('uploadModal');
         }
         
-        function handleFiles(files) {
-            const MAX_SIZE = 10 * 1024 * 1024; // 10MB
-            const oversized = [];
-            const validFiles = [];
-            
-            Array.from(files).forEach(file => {
-                if (file.size > MAX_SIZE) {
-                    oversized.push(`${file.name} (${(file.size / 1024 / 1024).toFixed(1)}MB)`);
-                } else {
-                    validFiles.push(file);
-                }
-            });
-            
-            if (oversized.length > 0) {
-                alert(`⚠️ Files exceed 10MB limit and will not be uploaded:\n\n${oversized.join('\n')}`);
+        // Downscale + re-encode large images in the browser before upload.
+        // HEIC/HEIF/AVIF usually can't be decoded to a canvas, so we leave those
+        // untouched and let the server convert them (ImageMagick).
+        async function compressImage(file, maxDim = 2000, quality = 0.82) {
+            const type = (file.type || '').toLowerCase();
+            const name = (file.name || '').toLowerCase();
+            const isHeic = /heic|heif|avif/.test(type) || /\.(heic|heif|heics|avif)$/.test(name);
+            if (isHeic || !type.startsWith('image/')) return file;
+            try {
+                let bitmap;
+                try { bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' }); }
+                catch (_) { bitmap = await createImageBitmap(file); }
+                let { width, height } = bitmap;
+                const scale = Math.min(1, maxDim / Math.max(width, height));
+                // Already small enough and not a huge file → keep original (avoid re-compressing)
+                if (scale === 1 && file.size < 1.5 * 1024 * 1024) { bitmap.close && bitmap.close(); return file; }
+                width = Math.round(width * scale);
+                height = Math.round(height * scale);
+                const canvas = document.createElement('canvas');
+                canvas.width = width; canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, width, height); // flatten transparency for JPEG
+                ctx.drawImage(bitmap, 0, 0, width, height);
+                bitmap.close && bitmap.close();
+                const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', quality));
+                if (!blob || blob.size >= file.size) return file; // only keep it if smaller
+                const newName = file.name.replace(/\.(png|webp|bmp|gif|jpe?g|tiff?)$/i, '') + '.jpg';
+                return new File([blob], newName, { type: 'image/jpeg', lastModified: Date.now() });
+            } catch (e) {
+                console.warn('Image compression failed, using original:', e);
+                return file;
             }
-            
-            selectedFiles = validFiles;
+        }
+
+        async function handleFiles(files) {
+            const MAX_SIZE = 10 * 1024 * 1024; // 10MB (server cap)
             const preview = document.getElementById('previewFiles');
+            preview.innerHTML = '<div style="padding: 12px; color: var(--text-secondary); font-size: 13px;">⏳ Optimizing images…</div>';
+            selectedFiles = [];
+            const skipped = [];
+
+            for (const file of Array.from(files)) {
+                const processed = await compressImage(file);
+                if (processed.size > MAX_SIZE) {
+                    skipped.push(`${file.name} (${(processed.size / 1024 / 1024).toFixed(1)}MB)`);
+                } else {
+                    selectedFiles.push(processed);
+                }
+            }
+
             preview.innerHTML = '';
             selectedFiles.forEach(file => {
                 const reader = new FileReader();
                 reader.onload = (e) => { preview.innerHTML += `<div class="photo-item"><img src="${e.target.result}" alt="Preview"></div>`; };
                 reader.readAsDataURL(file);
             });
-            
-            if (selectedFiles.length === 0 && oversized.length > 0) {
-                preview.innerHTML = '<div class="empty-state"><p>⚠️ All selected files exceed 10MB limit</p></div>';
+
+            if (skipped.length > 0) {
+                alert(`⚠️ These files are still over 10MB after optimizing and were skipped:\n\n${skipped.join('\n')}\n\n(Usually very large HEIC files — they can't be optimized in the browser.)`);
+            }
+            if (selectedFiles.length === 0 && skipped.length === 0) {
+                preview.innerHTML = '<div class="empty-state"><p>No images selected</p></div>';
             }
         }
         
