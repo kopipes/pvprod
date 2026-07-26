@@ -10,44 +10,63 @@
             --primary: #0f172a;
             --primary-light: #1e293b;
             --secondary: #3b82f6;
-            --accent: #f97316;
+            --brand: #6366f1;          /* indigo — modern interactive accent */
+            --brand-2: #8b5cf6;        /* violet */
+            --accent: #f97316;         /* signature orange — primary CTA */
+            --accent-2: #fb923c;
             --success: #10b981;
             --warning: #eab308;
             --error: #ef4444;
-            --bg: #f8fafc;
+            --bg: #eef1f8;
+            --bg-soft: #f6f8fc;
             --card: #ffffff;
             --text-primary: #0f172a;
             --text-secondary: #64748b;
-            --border: #e2e8f0;
-            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
-            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
-            --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
-            --radius: 16px;
-            --radius-sm: 10px;
-            --radius-lg: 24px;
+            --text-muted: #94a3b8;
+            --border: #e6eaf2;
+            --shadow-sm: 0 1px 2px rgba(15,23,42,0.05);
+            --shadow-md: 0 6px 16px -6px rgba(15,23,42,0.12), 0 2px 6px -2px rgba(15,23,42,0.06);
+            --shadow-lg: 0 14px 30px -10px rgba(15,23,42,0.16), 0 4px 10px -6px rgba(15,23,42,0.08);
+            --shadow-xl: 0 26px 50px -16px rgba(15,23,42,0.22), 0 10px 20px -12px rgba(15,23,42,0.1);
+            --shadow-brand: 0 10px 26px -8px rgba(99,102,241,0.5);
+            --shadow-accent: 0 10px 26px -8px rgba(249,115,22,0.5);
+            --radius: 20px;
+            --radius-sm: 12px;
+            --radius-lg: 26px;
+            --nav-h: 68px;
+            --ease: cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #f0f4ff 0%, #f8fafc 50%, #f0fdf4 100%);
+            background:
+                radial-gradient(1200px 600px at 100% -5%, rgba(99,102,241,0.10), transparent 60%),
+                radial-gradient(1000px 500px at -10% 110%, rgba(16,185,129,0.10), transparent 55%),
+                var(--bg-soft);
+            background-attachment: fixed;
             color: var(--text-primary);
             min-height: 100vh;
-            padding-bottom: 100px;
+            padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 28px);
             -webkit-font-smoothing: antialiased;
         }
+
+        /* Header + bottom nav only when authenticated */
+        body:not(.logged-in) .header,
+        body:not(.logged-in) .bottom-nav { display: none; }
+        body:not(.logged-in) { padding-bottom: 0; }
+        body:not(.logged-in) .main { padding-top: 8px; }
         
         .header {
             background: linear-gradient(135deg, var(--primary) 0%, #1e3a5f 100%);
             color: white;
-            padding: 20px;
+            padding: 14px 20px;
             position: sticky;
             top: 0;
             z-index: 100;
             backdrop-filter: blur(20px);
-            box-shadow: 0 4px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 6px 24px -8px rgba(15,23,42,0.4);
         }
         
         .header-content {
@@ -102,43 +121,60 @@
         
         .logout-btn:hover { background: rgba(255,255,255,0.2); transform: translateY(-1px); }
         
-        .nav {
-            background: var(--card);
-            border-bottom: 1px solid var(--border);
-            padding: 12px 16px;
+        /* ===== Bottom tab bar ===== */
+        .bottom-nav {
+            position: fixed;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 0;
+            width: 100%;
+            max-width: 520px;
             display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            position: sticky;
-            top: 76px;
-            z-index: 99;
-            scrollbar-width: none;
+            align-items: center;
+            justify-content: space-around;
+            gap: 4px;
+            height: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
+            padding: 0 12px env(safe-area-inset-bottom, 0px);
+            background: rgba(255,255,255,0.82);
+            backdrop-filter: blur(18px) saturate(180%);
+            -webkit-backdrop-filter: blur(18px) saturate(180%);
+            border-top: 1px solid var(--border);
+            box-shadow: 0 -10px 30px -12px rgba(15,23,42,0.18);
+            z-index: 120;
         }
-        
-        .nav::-webkit-scrollbar { display: none; }
-        
-        .nav-btn {
-            padding: 10px 20px;
+
+        .tab-btn {
+            flex: 1;
             border: none;
-            background: var(--bg);
-            border-radius: 30px;
-            font-size: 13px;
+            background: transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            padding: 8px 4px;
+            font-family: inherit;
+            font-size: 11px;
             font-weight: 600;
-            white-space: nowrap;
+            color: var(--text-muted);
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            color: var(--text-secondary);
+            border-radius: 14px;
+            transition: color 0.25s ease, transform 0.25s var(--ease);
         }
-        
-        .nav-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-        
-        .nav-btn.active {
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
-            color: white;
-            box-shadow: 0 4px 15px rgba(15, 23, 42, 0.3);
+
+        .tab-btn .tab-ico {
+            font-size: 21px;
+            line-height: 1;
+            transition: transform 0.3s var(--ease);
+            filter: grayscale(0.4);
+            opacity: 0.75;
         }
-        
-        .main { padding: 20px; max-width: 800px; margin: 0 auto; }
+
+        .tab-btn.active { color: var(--brand); }
+        .tab-btn.active .tab-ico { transform: translateY(-3px) scale(1.12); filter: none; opacity: 1; }
+        .tab-btn:active { transform: scale(0.92); }
+
+
+        .main { padding: 22px 20px; max-width: 800px; margin: 0 auto; }
         
         .section { display: none; animation: fadeIn 0.3s ease; }
         .section.active { display: block; }
@@ -152,13 +188,13 @@
             background: var(--card);
             border-radius: var(--radius);
             padding: 24px;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
             box-shadow: var(--shadow-md);
-            border: 1px solid rgba(0,0,0,0.02);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid var(--border);
+            transition: transform 0.3s var(--ease), box-shadow 0.3s ease;
         }
-        
-        .card:hover { transform: translateY(-2px); box-shadow: var(--shadow-xl); }
+
+        .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
         
         .card-header {
             display: flex;
@@ -331,19 +367,39 @@
         .checklist-meta { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
         
         .list-item {
-            padding: 20px;
+            padding: 12px 14px;
             background: var(--bg);
-            border-radius: 16px;
-            margin-bottom: 12px;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 14px;
+            margin-bottom: 8px;
+            transition: border-color 0.25s ease, transform 0.25s var(--ease);
             border: 2px solid transparent;
         }
-        
-        .list-item:hover { border-color: var(--secondary); transform: translateX(4px); }
-        
-        .list-item-title { font-weight: 700; font-size: 16px; }
-        .list-item-sub { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+        .list-item:hover { border-color: var(--brand); }
+
+        .list-item-title { font-weight: 700; font-size: 14.5px; }
+        .list-item-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+        /* Shared compact row layout for list rows (admin divisions/users) */
+        .li-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .li-main { min-width: 0; flex: 1; }
+        .li-main .list-item-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .li-main .list-item-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .li-main .list-item-sub .role-badge { margin-right: 4px; }
+        .li-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+        .icon-btn {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            background: var(--card);
+            cursor: pointer;
+            font-size: 15px;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .icon-btn:hover { border-color: var(--brand); transform: translateY(-1px); }
+        .icon-btn.danger:hover { border-color: var(--error); color: var(--error); }
         
         .list-item-badge {
             display: inline-block;
@@ -454,81 +510,98 @@
         .empty-state h4 { font-size: 18px; font-weight: 700; margin-bottom: 8px; color: var(--text-primary); }
         .empty-state p { font-size: 14px; }
         
-        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-        
-        .stat-card {
-            background: var(--card);
-            border-radius: var(--radius);
-            padding: 24px;
-            text-align: center;
-            box-shadow: var(--shadow-md);
-            transition: all 0.3s;
-        }
-        
-        .stat-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-xl); }
-        
-        .stat-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 14px;
+        /* Compact single-row stat strip */
+        .stat-strip {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 12px;
-            font-size: 22px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+            margin-bottom: 8px;
         }
-        
+
+        .stat-strip .stat {
+            flex: 1;
+            min-width: 0;
+            text-align: center;
+            padding: 14px 6px;
+            position: relative;
+        }
+
+        .stat-strip .stat + .stat::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 22%;
+            height: 56%;
+            width: 1px;
+            background: var(--border);
+        }
+
+        .stat-strip .stat-ic { font-size: 15px; line-height: 1; display: block; margin-bottom: 4px; }
+
         .stat-value {
-            font-size: 32px;
+            font-size: 24px;
             font-weight: 800;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            letter-spacing: -0.5px;
+            line-height: 1.1;
+            background: linear-gradient(135deg, var(--brand), var(--secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            white-space: nowrap;
         }
-        
-        .stat-label { font-size: 12px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+
+        .stat-label { font-size: 10px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; margin-top: 3px; }
         
         .project-card {
             background: var(--card);
-            border-radius: var(--radius);
-            padding: 24px;
-            margin-bottom: 16px;
-            box-shadow: var(--shadow-md);
-            border-left: 5px solid;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 16px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            box-shadow: var(--shadow-sm);
+            border-left: 4px solid;
+            transition: transform 0.25s var(--ease), box-shadow 0.25s ease;
             position: relative;
             overflow: hidden;
         }
-        
-        .project-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 100px;
-            height: 100px;
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), transparent);
-            border-radius: 0 0 0 100%;
-        }
-        
-        .project-card:hover { transform: translateY(-4px) scale(1.02); box-shadow: var(--shadow-xl); }
-        
+
+        .project-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
         .project-card[data-status="pre-loading"] { border-color: var(--warning); }
         .project-card[data-status="loading-in"] { border-color: var(--secondary); }
         .project-card[data-status="loading-out"] { border-color: var(--accent); }
         .project-card[data-status="completed"] { border-color: var(--success); }
-        
-        .project-name { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
-        .project-client { font-size: 14px; color: var(--text-secondary); }
-        .project-meta { display: flex; gap: 16px; margin-top: 16px; font-size: 13px; color: var(--text-secondary); }
+
+        .project-name { font-size: 15px; font-weight: 800; }
+        .project-client { font-size: 12.5px; color: var(--text-secondary); margin-top: 1px; }
+        .pc-updated { font-size: 11px; color: var(--text-muted); margin-top: 5px; font-weight: 600; }
+        .project-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; font-size: 11.5px; color: var(--text-secondary); }
+
+        /* Compact project-card row: text left, status/actions right */
+        .pc-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .pc-main { min-width: 0; flex: 1; }
+        .pc-main .project-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .pc-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .pc-row .list-item-badge { margin-top: 0; flex-shrink: 0; }
+
+        /* Responsive 2-column grid for card lists (1 column on narrow phones) */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 10px;
+            align-items: start;
+        }
+        .card-grid .project-card,
+        .card-grid .list-item { margin-bottom: 0; }
+        .card-grid .empty-state { grid-column: 1 / -1; }
         .meta-item { display: flex; align-items: center; gap: 6px; font-weight: 500; }
         
         .phase-progress { display: flex; gap: 6px; margin: 20px 0; }
         .phase-bar { flex: 1; height: 8px; background: var(--border); border-radius: 10px; overflow: hidden; }
         .phase-bar-fill { height: 100%; background: linear-gradient(90deg, var(--success), #34d399); border-radius: 10px; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
         
-        .detail-header { background: linear-gradient(135deg, var(--primary), #1e3a5f); color: white; padding: 24px; margin: -20px -20px 24px -20px; }
+        .detail-header { background: linear-gradient(135deg, var(--primary), #1e3a5f); color: white; padding: 24px 20px; margin: -22px -20px 24px -20px; border-radius: 0 0 var(--radius) var(--radius); }
         
         .back-btn {
             background: rgba(255,255,255,0.1);
@@ -545,8 +618,17 @@
         
         .back-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.1); }
         
-        .status-tabs { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
-        
+        .status-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+        }
+        .status-tabs::-webkit-scrollbar { display: none; }
+
         .status-tab {
             padding: 10px 18px;
             border: 2px solid var(--border);
@@ -555,16 +637,19 @@
             font-weight: 600;
             cursor: pointer;
             background: white;
-            transition: all 0.3s;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            flex-shrink: 0;
+            transition: all 0.3s var(--ease);
         }
-        
-        .status-tab:hover { border-color: var(--secondary); transform: translateY(-2px); }
-        
+
+        .status-tab:hover { border-color: var(--brand); color: var(--brand); transform: translateY(-2px); }
+
         .status-tab.active {
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            background: linear-gradient(135deg, var(--brand), var(--brand-2));
             color: white;
             border-color: transparent;
-            box-shadow: 0 4px 15px rgba(15, 23, 42, 0.3);
+            box-shadow: var(--shadow-brand);
         }
         
         .hidden { display: none !important; }
@@ -573,28 +658,19 @@
         .flex { display: flex; }
         .gap-2 { gap: 12px; }
         
-        .welcome-section {
-            background: linear-gradient(135deg, var(--primary), #1e3a5f);
-            color: white;
-            border-radius: var(--radius);
-            padding: 28px;
-            margin-bottom: 24px;
-            position: relative;
+        .header-greeting {
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.85);
+            max-width: 140px;
+            white-space: nowrap;
             overflow: hidden;
+            text-overflow: ellipsis;
         }
-        
-        .welcome-section::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 100%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        @media (max-width: 380px) {
+            .header h1 { display: none; }
+            .header-greeting { max-width: 110px; }
         }
-        
-        .welcome-section h3 { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
-        .welcome-section p { opacity: 0.8; font-size: 14px; }
         
         .section-title { font-size: 20px; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
         .section-title::after { content: ''; flex: 1; height: 2px; background: linear-gradient(90deg, var(--border), transparent); }
@@ -669,7 +745,7 @@
         /* Toast Notification */
         .toast {
             position: fixed;
-            bottom: 100px;
+            bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 24px);
             left: 50%;
             transform: translateX(-50%);
             background: var(--primary);
@@ -696,19 +772,11 @@
                 <h1>PVPROD</h1>
             </div>
             <div class="header-actions">
-                <div class="user-badge" id="userBadge">Admin</div>
+                <span class="header-greeting">Hi, <span id="welcomeName">User</span> 👋</span>
                 <button class="logout-btn" onclick="logout()">Logout</button>
             </div>
         </div>
     </header>
-    
-    <nav class="nav">
-        <button class="nav-btn active" data-section="dashboard">🏠 Dashboard</button>
-        <button class="nav-btn" data-section="projects">📋 Projects</button>
-        <button class="nav-btn admin-only" data-section="master">⚙️ Master</button>
-        <button class="nav-btn admin-only" data-section="cleanup">🧹 Cleanup</button>
-        <button class="nav-btn" data-section="settings">👤 Settings</button>
-    </nav>
     
     <main class="main">
         <section id="loginSection" class="section active">
@@ -737,36 +805,15 @@
         </section>
         
         <section id="dashboardSection" class="section active">
-            <div class="welcome-section">
-                <h3>Hello, <span id="welcomeName">User</span> 👋</h3>
-                <p>Ready to manage your production projects</p>
-            </div>
-            
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, var(--secondary), #60a5fa); color: white;">📋</div>
-                    <div class="stat-value" id="statProjects">0</div>
-                    <div class="stat-label">Total Projects</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, var(--accent), #fb923c); color: white;">⏳</div>
-                    <div class="stat-value" id="statActive">0</div>
-                    <div class="stat-label">Active</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, var(--success), #34d399); color: white;">📷</div>
-                    <div class="stat-value" id="statPhotos">0</div>
-                    <div class="stat-label">Photos</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, var(--warning), #facc15); color: white;">✅</div>
-                    <div class="stat-value" id="statChecklist">0</div>
-                    <div class="stat-label">Checklist Done</div>
-                </div>
+            <div class="stat-strip">
+                <div class="stat"><span class="stat-ic">📋</span><div class="stat-value" id="statProjects">0</div><div class="stat-label">Projects</div></div>
+                <div class="stat"><span class="stat-ic">⏳</span><div class="stat-value" id="statActive">0</div><div class="stat-label">Active</div></div>
+                <div class="stat"><span class="stat-ic">📷</span><div class="stat-value" id="statPhotos">0</div><div class="stat-label">Photos</div></div>
+                <div class="stat"><span class="stat-ic">✅</span><div class="stat-value" id="statChecklist">0</div><div class="stat-label">Done</div></div>
             </div>
             
         <h4 class="section-title mt-3">Recent Projects</h4>
-        <div id="recentProjects"></div>
+        <div id="recentProjects" class="card-grid"></div>
         <div id="recentProjectsPagination" style="display: flex; justify-content: center; gap: 8px; margin-top: 16px; flex-wrap: wrap;"></div>
         </section>
         
@@ -784,16 +831,7 @@
                 </select>
             </div>
             <button class="btn btn-primary btn-block mb-2" onclick="showModal('projectModal')">+ Create New Project</button>
-            <div id="projectsList"></div>
-        </section>
-        
-        <section id="cleanupSection" class="section">
-            <div class="card">
-                <div class="card-header"><span class="card-icon">🧹</span><h3 class="card-title">Cleanup Orphaned Files</h3></div>
-                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">Remove files in uploads folder that are no longer linked to any project in the database.</p>
-                <button class="btn btn-secondary btn-block" onclick="loadOrphanedFiles()">🔍 Scan for Orphaned Files</button>
-                <div id="orphanedFilesList" style="margin-top: 16px;"></div>
-            </div>
+            <div id="projectsList" class="card-grid"></div>
         </section>
         
         <section id="masterSection" class="section">
@@ -802,15 +840,16 @@
                 <button class="status-tab" data-tab="users">Users</button>
                 <button class="status-tab" data-tab="pending">⏳ Pending</button>
                 <button class="status-tab" data-tab="audit">📋 Audit Log</button>
+                <button class="status-tab" data-tab="cleanup">🧹 Cleanup</button>
             </div>
             <div id="divisionsTab">
                 <button class="btn btn-secondary btn-block mb-2" onclick="showAddDivision()">+ Add Division</button>
-                <div id="divisionsList"></div>
+                <div id="divisionsList" class="card-grid"></div>
             </div>
             <div id="usersTab" class="hidden">
                 <div class="form-group" style="margin-bottom: 12px;"><input type="text" class="form-control" id="userSearchInput" placeholder="Search users..." oninput="filterUsers()"></div>
                 <button class="btn btn-secondary btn-block mb-2" onclick="showModal('userModal')">+ Add User</button>
-                <div id="usersList"></div>
+                <div id="usersList" class="card-grid"></div>
             </div>
             <div id="auditTab" class="hidden">
                 <div class="form-group" style="margin-bottom: 12px;"><input type="text" class="form-control" id="auditSearchInput" placeholder="Search audit logs..." oninput="searchAudit()"></div>
@@ -840,7 +879,7 @@
         <section id="projectDetailSection" class="section">
             <div class="detail-header">
                 <div class="flex">
-                    <button class="back-btn" onclick="showSection('projects')">←</button>
+                    <button class="back-btn" onclick="goBackFromDetail()">←</button>
                     <div>
                         <h2 id="detailProjectName" style="font-size: 20px; font-weight: 800;">Project Name</h2>
                         <div id="detailProjectClient" style="opacity: 0.7; font-size: 14px;">Client Name</div>
@@ -938,7 +977,14 @@
             </div>
         </section>
     </main>
-    
+
+    <nav class="bottom-nav" id="bottomNav">
+        <button class="tab-btn active" data-section="dashboard"><span class="tab-ico">🏠</span><span class="tab-lbl">Home</span></button>
+        <button class="tab-btn" data-section="projects"><span class="tab-ico">📋</span><span class="tab-lbl">Projects</span></button>
+        <button class="tab-btn admin-only" data-section="master"><span class="tab-ico">⚙️</span><span class="tab-lbl">Admin</span></button>
+        <button class="tab-btn" data-section="settings"><span class="tab-ico">👤</span><span class="tab-lbl">Profile</span></button>
+    </nav>
+
     <!-- Modals -->
     <div class="modal-overlay" id="projectModal">
         <div class="modal">
@@ -1015,7 +1061,7 @@
         <div class="modal">
             <div class="modal-header"><h3 class="modal-title" id="uploadTitle">Upload Photos</h3><button class="modal-close" onclick="hideModal('uploadModal')">×</button></div>
             <div class="form-group"><label>Batch Title</label><input type="text" class="form-control" id="uploadBatchTitle" placeholder="e.g., Morning Survey, Site Layout, etc."></div>
-            <div class="upload-area" onclick="document.getElementById('fileInput').click()"><div class="upload-icon">📷</div><h4>Tap to select photos</h4><p>Max 20 photos per upload</p><p style="color: var(--accent); font-weight: 600; margin-top: 8px;">⚠️ Max file size: 10MB</p></div>
+            <div class="upload-area" onclick="document.getElementById('fileInput').click()"><div class="upload-icon">📷</div><h4>Tap to select photos</h4><p>Max 20 photos per upload</p><p style="color: var(--success); font-weight: 600; margin-top: 8px;">✨ Large photos are optimized automatically</p></div>
             <input type="file" id="fileInput" multiple accept="image/*,.heic,.heif" style="display: none;" onchange="handleFiles(this.files)">
             <div id="previewFiles" class="photo-grid mt-3"></div>
             <div class="form-group mt-3"><label>Description (optional)</label><textarea class="form-control" id="uploadNote" rows="2" placeholder="Add a description..."></textarea></div>
@@ -1129,31 +1175,29 @@
             applyLoginState(false);
         }
         
+        // Never render an empty name: fall back to the email local-part, then a default
+        function displayName(u) {
+            if (!u) return 'User';
+            const n = (u.name || '').trim();
+            if (n) return n;
+            if (u.email) return u.email.split('@')[0];
+            return 'User';
+        }
+
         function applyLoginState(isLoggedIn) {
+            document.body.classList.toggle('logged-in', !!(isLoggedIn && currentUser));
             if (isLoggedIn && currentUser) {
                 // Logged in state
-                document.getElementById('userBadge').textContent = currentUser.name;
-                document.getElementById('userBadge').onclick = () => showModal('settingsModal');
-                document.getElementById('welcomeName').textContent = currentUser.name;
-                document.querySelectorAll('.logout-btn').forEach(btn => {
-                    btn.textContent = 'Logout';
-                    btn.style.display = '';
-                    btn.onclick = logout;
-                });
+                document.getElementById('welcomeName').textContent = displayName(currentUser);
             } else {
                 // Logged out state
-                document.getElementById('userBadge').textContent = 'Guest';
-                document.getElementById('userBadge').onclick = null;
-                document.getElementById('welcomeName').textContent = 'Guest';
+                document.getElementById('welcomeName').textContent = 'there';
                 document.getElementById('loginSection').classList.add('active');
                 document.getElementById('dashboardSection').classList.remove('active');
                 document.getElementById('projectsSection').classList.remove('active');
                 document.getElementById('masterSection').classList.remove('active');
                 document.getElementById('settingsSection').classList.remove('active');
                 document.getElementById('projectDetailSection').classList.remove('active');
-                document.querySelectorAll('.logout-btn').forEach(btn => {
-                    btn.style.display = 'none';
-                });
             }
         }
         
@@ -1211,6 +1255,11 @@
                     loadDivisions();
                     loadUsers();
                     loadProfile();
+                    // Restore the section from the URL hash (refresh / back-forward)
+                    const hash = location.hash.replace('#', '');
+                    if (['dashboard', 'projects', 'master', 'settings'].includes(hash)) {
+                        showSection(hash, { fromHash: true });
+                    }
                     return;
                 } catch (e) { console.error(e); }
             }
@@ -1221,17 +1270,35 @@
             if (currentUser.role !== 'admin') document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
         }
         
-        document.querySelectorAll('.nav-btn').forEach(btn => { btn.addEventListener('click', () => showSection(btn.dataset.section)); });
-        document.querySelectorAll('.status-tab').forEach(tab => { tab.addEventListener('click', () => switchTab(tab.dataset.tab)); });
-        
-        function showSection(section) {
+        document.querySelectorAll('.tab-btn').forEach(btn => { btn.addEventListener('click', () => showSection(btn.dataset.section)); });
+        document.querySelectorAll('#projectDetailSection .status-tab').forEach(tab => { tab.addEventListener('click', () => switchTab(tab.dataset.tab)); });
+
+        // Top-level sections reachable from the bottom nav (used for hash routing)
+        const NAV_SECTIONS = ['dashboard', 'projects', 'master', 'settings'];
+
+        function showSection(section, opts = {}) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.getElementById(section + 'Section').classList.add('active');
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.querySelector(`.nav-btn[data-section="${section}"]`)?.classList.add('active');
+            // Highlight matching bottom-nav tab (projectDetail keeps Projects lit)
+            const navTarget = section === 'projectDetail' ? 'projects' : section;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector(`.tab-btn[data-section="${navTarget}"]`)?.classList.add('active');
+            window.scrollTo({ top: 0, behavior: opts.fromHash ? 'auto' : 'smooth' });
+            // Keep the URL hash in sync so the back button & refresh work
+            if (!opts.fromHash && NAV_SECTIONS.includes(section) && location.hash !== '#' + section) {
+                history.pushState(null, '', '#' + section);
+            }
             if (section === 'projects') loadProjects();
             if (section === 'master') { loadDivisions(); loadUsers(); }
         }
+
+        // Back button / manual hash change → navigate to that section
+        window.addEventListener('hashchange', () => {
+            if (!currentUser) return;
+            const s = location.hash.replace('#', '');
+            if (NAV_SECTIONS.includes(s)) showSection(s, { fromHash: true });
+            else if (!s) showSection('dashboard', { fromHash: true });
+        });
         
         function switchTab(tabId) {
             document.querySelectorAll('#projectDetailSection .status-tab').forEach(t => t.classList.remove('active'));
@@ -1266,7 +1333,7 @@
                 container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><h4>No Projects Yet</h4><p>Create your first project to get started</p></div>';
                 document.getElementById('recentProjectsPagination').innerHTML = '';
             } else {
-                container.innerHTML = pageProjects.map(p => `<div class="project-card" data-status="${p.status}" onclick="viewProject('${p.id}')"><div class="project-name">${p.name}</div><div class="project-client">${p.client}</div><span class="list-item-badge status-${p.status === 'pre-loading' ? 'pending' : p.status === 'completed' ? 'done' : 'progress'}">${formatStatus(p.status)}</span></div>`).join('');
+                container.innerHTML = pageProjects.map(p => `<div class="project-card" data-status="${p.status}" onclick="viewProject('${p.id}')"><div class="pc-row"><div class="pc-main"><div class="project-name">${p.name}</div><div class="project-client">${p.client || ''}</div><div class="pc-updated">🕒 Updated ${timeAgo(p.last_activity || p.created_at)}</div></div><span class="list-item-badge status-${p.status === 'pre-loading' ? 'pending' : p.status === 'completed' ? 'done' : 'progress'}">${formatStatus(p.status)}</span></div></div>`).join('');
                 renderRecentProjectsPagination(totalPages);
             }
         }
@@ -1310,7 +1377,7 @@
                 if (divisions.length === 0) {
                     container.innerHTML = '<div class="empty-state"><p>No divisions yet</p></div>';
                 } else {
-                    container.innerHTML = divisions.map(d => `<div class="list-item"><div class="list-item-title">${d.name}</div><div class="list-item-sub">Created ${formatDate(d.created_at)}</div><div style="display: flex; gap: 8px; margin-top: 12px;">${currentUser.role === 'admin' ? `<button class="btn btn-outline btn-sm" onclick="showEditDivision(${d.id}, '${d.name}')" style="flex: 1;">✏️ Edit</button><button class="btn btn-outline btn-sm" onclick="deleteDivision(${d.id})" style="color: var(--error);">Delete</button>` : ''}</div></div>`).join('');
+                    container.innerHTML = divisions.map(d => `<div class="list-item"><div class="li-row"><div class="li-main"><div class="list-item-title">${d.name}</div><div class="list-item-sub">Created ${formatDate(d.created_at)}</div></div>${currentUser.role === 'admin' ? `<div class="li-actions"><button class="icon-btn" title="Edit" onclick="showEditDivision(${d.id}, '${d.name}')">✏️</button><button class="icon-btn danger" title="Delete" onclick="deleteDivision(${d.id})">🗑️</button></div>` : ''}</div></div>`).join('');
                 }
             } catch (e) { console.error(e); }
         }
@@ -1330,7 +1397,7 @@
             if (users.length === 0) {
                 container.innerHTML = '<div class="empty-state"><p>No users found</p></div>';
             } else {
-                container.innerHTML = users.map(u => `<div class="list-item"><div class="list-item-title">${u.name}</div><div class="list-item-sub">${u.email || ''} ${u.phone ? '• ' + u.phone : ''}</div><span class="role-badge role-${u.role}">${u.role}</span>${currentUser.role === 'admin' ? `<div style="display: flex; gap: 8px; margin-top: 12px;"><button class="btn btn-outline btn-sm" onclick="showEditUser(${u.id})" style="flex: 1;">✏️ Edit</button><button class="btn btn-outline btn-sm" onclick="deleteUser(${u.id})" style="color: var(--error);">Delete</button></div>` : ''}</div>`).join('');
+                container.innerHTML = users.map(u => `<div class="list-item"><div class="li-row"><div class="li-main"><div class="list-item-title">${displayName(u)}</div><div class="list-item-sub"><span class="role-badge role-${u.role}">${u.role}</span> ${u.email || ''}${u.phone ? ' • ' + u.phone : ''}</div></div>${currentUser.role === 'admin' ? `<div class="li-actions"><button class="icon-btn" title="Edit" onclick="showEditUser(${u.id})">✏️</button><button class="icon-btn danger" title="Delete" onclick="deleteUser(${u.id})">🗑️</button></div>` : ''}</div></div>`).join('');
             }
         }
         
@@ -1378,7 +1445,7 @@
         
         function loadProfile() {
             if (!currentUser) return;
-            document.getElementById('profileInfo').innerHTML = `<div style="text-align: center; margin-bottom: 20px;"><div class="user-avatar" style="width: 80px; height: 80px; font-size: 32px; margin: 0 auto 12px;">${currentUser.name.charAt(0).toUpperCase()}</div><h4 style="font-size: 18px; font-weight: 700;">${currentUser.name}</h4><span class="role-badge role-${currentUser.role}">${currentUser.role}</span>${currentUser.division_name ? '<p style="margin-top: 8px; color: var(--text-secondary);">' + currentUser.division_name + '</p>' : ''}</div><button class="btn btn-secondary btn-block" onclick="editProfile()">Edit Profile</button>`;
+            document.getElementById('profileInfo').innerHTML = `<div style="text-align: center; margin-bottom: 20px;"><div class="user-avatar" style="width: 80px; height: 80px; font-size: 32px; margin: 0 auto 12px;">${displayName(currentUser).charAt(0).toUpperCase()}</div><h4 style="font-size: 18px; font-weight: 700;">${displayName(currentUser)}</h4><span class="role-badge role-${currentUser.role}">${currentUser.role}</span>${currentUser.division_name ? '<p style="margin-top: 8px; color: var(--text-secondary);">' + currentUser.division_name + '</p>' : ''}</div><button class="btn btn-secondary btn-block" onclick="editProfile()">Edit Profile</button>`;
         }
         
         function editProfile() {
@@ -1397,8 +1464,7 @@
                 hideModal('settingsModal');
                 showToast('Settings saved!');
                 currentUser.name = name; currentUser.email = email; currentUser.phone = phone;
-                document.getElementById('userBadge').textContent = name;
-                document.getElementById('welcomeName').textContent = name;
+                document.getElementById('welcomeName').textContent = displayName(currentUser);
                 loadProfile();
             } catch (e) { alert('Error saving settings'); }
         }
@@ -1416,7 +1482,7 @@
                 if (filtered.length === 0) {
                     container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><h4>No Projects Found</h4><p>Try adjusting your filters or create a new project</p></div>';
                 } else {
-                    container.innerHTML = filtered.map(p => `<div class="project-card" data-status="${p.status}"><div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 10;"><div onclick="viewProject('${p.id}')" style="flex: 1; cursor: pointer; pointer-events: none;"><div class="project-name">${p.name}</div><div class="project-client">${p.client}</div><div class="project-meta"><span class="meta-item">📁 ${p.division_name || 'No Division'}</span><span class="meta-item">📅 ${formatDate(p.start_date)}</span>${p.end_date ? '<span class="meta-item">→ ' + formatDate(p.end_date) + '</span>' : ''}</div></div><button id="editBtn${p.id}" onclick="event.stopPropagation(); showProjectEdit('${p.id}')" class="btn btn-secondary btn-sm" style="padding: 12px 20px; font-size: 18px; min-width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; z-index: 20;">✏️</button></div><span class="list-item-badge status-${p.status === 'pre-loading' ? 'pending' : p.status === 'completed' ? 'done' : 'progress'}">${formatStatus(p.status)}</span></div>`).join('');
+                    container.innerHTML = filtered.map(p => `<div class="project-card" data-status="${p.status}"><div class="pc-row"><div class="pc-main" onclick="viewProject('${p.id}')" style="cursor: pointer;"><div class="pc-head"><span class="project-name">${p.name}</span><span class="list-item-badge status-${p.status === 'pre-loading' ? 'pending' : p.status === 'completed' ? 'done' : 'progress'}">${formatStatus(p.status)}</span></div><div class="project-client">${p.client || ''}</div><div class="project-meta"><span class="meta-item">📁 ${p.division_name || 'No Division'}</span><span class="meta-item">📅 ${formatDate(p.start_date)}</span>${p.end_date ? '<span class="meta-item">→ ' + formatDate(p.end_date) + '</span>' : ''}</div></div><button onclick="event.stopPropagation(); showProjectEdit('${p.id}')" class="icon-btn" title="Edit project">✏️</button></div></div>`).join('');
                 
                 document.querySelectorAll('.edit-project-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
@@ -1444,7 +1510,16 @@
             } catch (e) { alert('Error creating project'); }
         }
         
+        // Remember where the user opened the project from, so the back arrow returns there
+        let detailReturnSection = 'projects';
+        function goBackFromDetail() { showSection(detailReturnSection || 'projects'); }
+
         async function viewProject(id) {
+            // Only capture origin on a fresh open (not when refreshing the detail after an edit)
+            const active = document.querySelector('.section.active');
+            if (active && (active.id === 'dashboardSection' || active.id === 'projectsSection')) {
+                detailReturnSection = active.id.replace('Section', '');
+            }
             try {
                 currentProject = await fetchAPI('/api/projects/' + id);
                 document.getElementById('detailProjectName').textContent = currentProject.name;
@@ -1835,34 +1910,68 @@
             showModal('uploadModal');
         }
         
-        function handleFiles(files) {
-            const MAX_SIZE = 10 * 1024 * 1024; // 10MB
-            const oversized = [];
-            const validFiles = [];
-            
-            Array.from(files).forEach(file => {
-                if (file.size > MAX_SIZE) {
-                    oversized.push(`${file.name} (${(file.size / 1024 / 1024).toFixed(1)}MB)`);
-                } else {
-                    validFiles.push(file);
-                }
-            });
-            
-            if (oversized.length > 0) {
-                alert(`⚠️ Files exceed 10MB limit and will not be uploaded:\n\n${oversized.join('\n')}`);
+        // Downscale + re-encode large images in the browser before upload.
+        // HEIC/HEIF/AVIF usually can't be decoded to a canvas, so we leave those
+        // untouched and let the server convert them (ImageMagick).
+        async function compressImage(file, maxDim = 2000, quality = 0.82) {
+            const type = (file.type || '').toLowerCase();
+            const name = (file.name || '').toLowerCase();
+            const isHeic = /heic|heif|avif/.test(type) || /\.(heic|heif|heics|avif)$/.test(name);
+            if (isHeic || !type.startsWith('image/')) return file;
+            try {
+                let bitmap;
+                try { bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' }); }
+                catch (_) { bitmap = await createImageBitmap(file); }
+                let { width, height } = bitmap;
+                const scale = Math.min(1, maxDim / Math.max(width, height));
+                // Already small enough and not a huge file → keep original (avoid re-compressing)
+                if (scale === 1 && file.size < 1.5 * 1024 * 1024) { bitmap.close && bitmap.close(); return file; }
+                width = Math.round(width * scale);
+                height = Math.round(height * scale);
+                const canvas = document.createElement('canvas');
+                canvas.width = width; canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, width, height); // flatten transparency for JPEG
+                ctx.drawImage(bitmap, 0, 0, width, height);
+                bitmap.close && bitmap.close();
+                const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', quality));
+                if (!blob || blob.size >= file.size) return file; // only keep it if smaller
+                const newName = file.name.replace(/\.(png|webp|bmp|gif|jpe?g|tiff?)$/i, '') + '.jpg';
+                return new File([blob], newName, { type: 'image/jpeg', lastModified: Date.now() });
+            } catch (e) {
+                console.warn('Image compression failed, using original:', e);
+                return file;
             }
-            
-            selectedFiles = validFiles;
+        }
+
+        async function handleFiles(files) {
+            const MAX_SIZE = 10 * 1024 * 1024; // 10MB (server cap)
             const preview = document.getElementById('previewFiles');
+            preview.innerHTML = '<div style="padding: 12px; color: var(--text-secondary); font-size: 13px;">⏳ Optimizing images…</div>';
+            selectedFiles = [];
+            const skipped = [];
+
+            for (const file of Array.from(files)) {
+                const processed = await compressImage(file);
+                if (processed.size > MAX_SIZE) {
+                    skipped.push(`${file.name} (${(processed.size / 1024 / 1024).toFixed(1)}MB)`);
+                } else {
+                    selectedFiles.push(processed);
+                }
+            }
+
             preview.innerHTML = '';
             selectedFiles.forEach(file => {
                 const reader = new FileReader();
                 reader.onload = (e) => { preview.innerHTML += `<div class="photo-item"><img src="${e.target.result}" alt="Preview"></div>`; };
                 reader.readAsDataURL(file);
             });
-            
-            if (selectedFiles.length === 0 && oversized.length > 0) {
-                preview.innerHTML = '<div class="empty-state"><p>⚠️ All selected files exceed 10MB limit</p></div>';
+
+            if (skipped.length > 0) {
+                alert(`⚠️ These files are still over 10MB after optimizing and were skipped:\n\n${skipped.join('\n')}\n\n(Usually very large HEIC files — they can't be optimized in the browser.)`);
+            }
+            if (selectedFiles.length === 0 && skipped.length === 0) {
+                preview.innerHTML = '<div class="empty-state"><p>No images selected</p></div>';
             }
         }
         
@@ -2012,10 +2121,12 @@
                 document.getElementById('usersTab').classList.add('hidden');
                 document.getElementById('auditTab').classList.add('hidden');
                 document.getElementById('pendingTab').classList.add('hidden');
+                document.getElementById('cleanupTab').classList.add('hidden');
                 if (tab.dataset.tab === 'divisions') { document.getElementById('divisionsTab').classList.remove('hidden'); }
                 else if (tab.dataset.tab === 'users') { document.getElementById('usersTab').classList.remove('hidden'); }
                 else if (tab.dataset.tab === 'audit') { document.getElementById('auditTab').classList.remove('hidden'); loadAudit(); }
                 else if (tab.dataset.tab === 'pending') { document.getElementById('pendingTab').classList.remove('hidden'); loadPending(); }
+                else if (tab.dataset.tab === 'cleanup') { document.getElementById('cleanupTab').classList.remove('hidden'); }
             });
         });
         
@@ -2241,6 +2352,18 @@
         document.querySelectorAll('.modal-overlay').forEach(m => { m.addEventListener('click', (e) => { if (e.target === m) m.classList.remove('active'); }); });
         
         function formatDate(d) { if (!d) return '-'; const date = new Date(d); return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
+        // Parse SQLite datetimes ("YYYY-MM-DD HH:MM:SS", UTC) and ISO strings alike
+        function parseDbDate(s) { if (!s) return null; const iso = s.includes('T') ? s : s.replace(' ', 'T') + 'Z'; const d = new Date(iso); return isNaN(d.getTime()) ? null : d; }
+        function timeAgo(s) {
+            const d = parseDbDate(s); if (!d) return '';
+            const sec = Math.floor((Date.now() - d.getTime()) / 1000);
+            if (sec < 45) return 'just now';
+            const min = Math.floor(sec / 60); if (min < 60) return min + 'm ago';
+            const hr = Math.floor(min / 60); if (hr < 24) return hr + 'h ago';
+            const day = Math.floor(hr / 24); if (day < 30) return day + 'd ago';
+            const mo = Math.floor(day / 30); if (mo < 12) return mo + 'mo ago';
+            return Math.floor(mo / 12) + 'y ago';
+        }
         function formatStatus(s) { return (s || '').replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()); }
         function showToast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 3000); }
         
